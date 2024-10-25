@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ItemSheetView: View {
-    var rate: Rate?
+    let rate: Rate
     @State var isBuying: Bool = false
     @State var isSelling: Bool = false
     var isPresented: Bool {
@@ -18,9 +18,9 @@ struct ItemSheetView: View {
     var body: some View {
         VStack(alignment: .leading) {
             VStack(alignment: .leading, spacing: -5) {
-                Text("\(rate?.code ?? "USD")")
+                Text("\(rate.code)")
                     .font(.largeTitle).bold()
-                Text("\(rate?.currency ?? "us dollar")".capitalized)
+                Text("\(rate.currency)".capitalized)
                     .foregroundStyle(Color(.secondaryLabel))
                     .font(.caption)
                     .fontWeight(.semibold)
@@ -29,9 +29,9 @@ struct ItemSheetView: View {
             Divider()
             
             VStack(alignment: .leading) {
-                Text(String(format: "%.2f", rate?.mid ?? 0.0))
+                Text(String(format: "%.2f", rate.mid))
                     .fontWeight(.semibold)
-                Text("\(rate?.currency.capitalized ?? "US Dollar") • \(rate?.code ?? "USD")")
+                Text("\(rate.currency.capitalized) • \(rate.code)")
                     .foregroundStyle(Color(.secondaryLabel))
                     .font(.caption)
                     .fontWeight(.semibold)
@@ -91,5 +91,5 @@ struct ItemSheetView: View {
 }
 
 #Preview {
-    ItemSheetView()
+    ItemSheetView(rate: Rate(currency: "US Dollar", code: "USD", mid: 0.0))
 }
