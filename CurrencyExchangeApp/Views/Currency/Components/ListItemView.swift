@@ -9,7 +9,21 @@ import SwiftUI
 
 struct ListItemView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        HStack {
+            VStack(alignment: .leading) {
+                Text("USD")
+                    .font(.title2)
+                    .bold()
+                Text("us dollar".capitalized)
+                    .foregroundStyle(Color(.secondaryLabel))
+                    .font(.caption)
+            }
+            Spacer()
+            VStack {
+                Text(String(format: "%.4f", "4.1") + "zł")
+                    .font(.headline)
+            }
+        }
     }
 }
 
