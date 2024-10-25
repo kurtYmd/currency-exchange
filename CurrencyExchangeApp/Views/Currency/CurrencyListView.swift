@@ -38,11 +38,14 @@ struct CurrencyListView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .sheet(item: $selectedRate) { rate in
-                    ItemSheetView(rate: rate)
-                }
             }
             .navigationTitle("Currencies")
+            .sheet(item: $selectedRate) { rate in
+                ItemSheetView(rate: rate)
+            }
+            .refreshable {
+                viewModel.fetchCurrencyRates()
+            }
             .onAppear {
                 viewModel.fetchCurrencyRates()
             }

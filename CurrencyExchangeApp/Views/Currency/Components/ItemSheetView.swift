@@ -9,18 +9,27 @@ import SwiftUI
 
 struct ItemSheetView: View {
     let rate: Rate
-    @State var isBuying: Bool = false
-    @State var isSelling: Bool = false
-    var isPresented: Bool {
-        isBuying || isSelling
+    @State private var sheetType: SheetType? = nil
+    
+    enum SheetType: Identifiable {
+        case buy, sell
+        
+        var id: Int {
+            switch self {
+            case .buy: return 0
+            case .sell: return 1
+            }
+        }
     }
     
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 20) {
+            // Currency Info Section
             VStack(alignment: .leading, spacing: -5) {
-                Text("\(rate.code)")
-                    .font(.largeTitle).bold()
-                Text("\(rate.currency)".capitalized)
+                Text(rate.code)
+                    .font(.largeTitle)
+                    .bold()
+                Text(rate.currency.capitalized)
                     .foregroundStyle(Color(.secondaryLabel))
                     .font(.caption)
                     .fontWeight(.semibold)
@@ -28,6 +37,7 @@ struct ItemSheetView: View {
             
             Divider()
             
+            // Rate Info Section
             VStack(alignment: .leading) {
                 Text(String(format: "%.2f", rate.mid))
                     .fontWeight(.semibold)
@@ -36,56 +46,61 @@ struct ItemSheetView: View {
                     .font(.caption)
                     .fontWeight(.semibold)
             }
-        }
-        .padding(10)
-        
-        HStack {
-            Button {
-                isBuying.toggle()
-            } label: {
-                HStack {
+            
+            // Buttons Section
+            HStack(spacing: 15) {
+                Button {
+                    sheetType = .buy
+                } label: {
                     Text("Buy")
                         .fontWeight(.semibold)
+                        .foregroundStyle(Color.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(Color(.systemGreen))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-                .foregroundStyle(Color(.white))
-                .frame(width: UIScreen.main.bounds.width / 2.5, height: 48)
-            }
-            .background(Color(.systemGreen))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            Button {
-                isSelling.toggle()
-            } label: {
-                HStack {
+                
+                Button {
+                    sheetType = .sell
+                } label: {
                     Text("Sell")
                         .fontWeight(.semibold)
+                        .foregroundStyle(Color.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(Color(.systemRed))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-                .foregroundStyle(Color(.white))
-                .frame(width: UIScreen.main.bounds.width / 2.5, height: 48)
             }
-            .background(Color(.systemRed))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            //.padding(.top, 24)
+            .padding(.top, 10)
         }
-        .sheet(isPresented: Binding(
-            get: { isPresented },
-            set: { newValue in
-                if !newValue {
-                    isBuying = false
-                    isSelling = false
+        .padding()
+        .sheet(item: $sheetType) { type in
+            NavigationStack {
+                Group {
+                    switch type {
+                    case .buy:
+                        BuyView(rate: rate)
+                    case .sell:
+                        SellView(rate: rate)
+                    }
+                }
+                .navigationTitle(type == .buy ? "Buy \(rate.code)" : "Sell \(rate.code)")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            sheetType = nil
+                        } label : {
+                            Image(systemName: "xmark.circle.fill")
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.secondary)
+                        }
+                    }
                 }
             }
-        )) {
-            if isBuying {
-                VStack {
-                    Text("Buy")
-                }
-                .presentationDetents([.height(200)])
-            } else {
-                VStack {
-                    Text("Sell")
-                }
-                .presentationDetents([.height(200)])
-            }
+            .presentationDetents([.height(200)])
         }
     }
 }
