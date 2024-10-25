@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 class CurrencyViewModel: ObservableObject {
-    @Published var rates: [Rate] = [] // Published variable for SwiftUI to observe
+    @Published var rates: [Rate] = []
     @Published var errorMessage: String? = nil
     
     private var cancellable: AnyCancellable?
@@ -18,7 +18,6 @@ class CurrencyViewModel: ObservableObject {
         fetchCurrencyRates()
     }
     
-    // Fetch currency rates from the API
     func fetchCurrencyRates() {
         let urlString = "https://api.nbp.pl/api/exchangerates/tables/A?format=json"
         

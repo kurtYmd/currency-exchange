@@ -15,7 +15,7 @@ struct WalletView: View {
     var body: some View {
         if let user = viewModel.currentUser {
             Text("Wallet")
-            Text("\(user.balance)")
+            Text(String(format: "%.2f", user.balance))
                 .font(.largeTitle)
                 .bold()
             VStack {
@@ -28,12 +28,16 @@ struct WalletView: View {
                         .bold()
                 }
                 .frame(width: 100, height: 50)
+                .foregroundStyle(Color(.white))
+                .background(Color(.systemRed))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.top, 24)
             }
             .sheet(isPresented: $showSheet, content: {
                 VStack {
                     // Top up functionality
                     TextField("Enter amount", text: $textFieldText)
-                        .padding(.top, 24)
+                        .padding(14)
                     Button {
                         
                     } label: {

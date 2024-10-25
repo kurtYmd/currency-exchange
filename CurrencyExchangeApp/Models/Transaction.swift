@@ -12,6 +12,6 @@ struct Transaction {
     var currencyFrom: String
     var currencyTo: String
     var amount: Double
-    var type: String // e.g., "buy" or "sell"
+    var type: String
     var date: Date
 }
