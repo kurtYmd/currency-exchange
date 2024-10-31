@@ -8,6 +8,7 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
+import Combine
 
 protocol AuthenticationFormProtocol {
     var formIsValid: Bool { get }
@@ -16,6 +17,7 @@ protocol AuthenticationFormProtocol {
 class AuthViewModel: ObservableObject {
     @Published var userSession: FirebaseAuth.User?
     @Published var currentUser: User?
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
         self.userSession = Auth.auth().currentUser
@@ -24,6 +26,18 @@ class AuthViewModel: ObservableObject {
             await fetchUser()
         }
     }
+    
+    func topUp(amount: Double) {
+            currentUser?.balance = (currentUser?.balance ?? 0.0) + amount
+            
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let userRef = Firestore.firestore().collection("users").document(uid)
+            do {
+                try userRef.setData(["balance": currentUser!.balance], merge: true)
+            } catch {
+                print("Failed to update balance with error: \(error.localizedDescription)")
+            }
+        }
     
     func signIn(withEmail email: String, password: String) async throws {
         do {
@@ -83,6 +97,17 @@ class AuthViewModel: ObservableObject {
             await fetchUser()
         } catch {
             print("DEBUG: Failed to delete user with error: \(error.localizedDescription)")
+        }
+    }
+    
+    private func updateFirestoreUser(field: String, value: Any) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let userRef = Firestore.firestore().collection("users").document(uid)
+        
+        do {
+            try userRef.setData([field: value], merge: true)
+        } catch {
+            print("Failed to update \(field) with error: \(error.localizedDescription)")
         }
     }
     

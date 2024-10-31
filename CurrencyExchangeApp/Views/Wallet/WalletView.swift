@@ -10,56 +10,53 @@ import SwiftUI
 struct WalletView: View {
     @EnvironmentObject var viewModel: AuthViewModel
     @State private var showSheet = false
-    @State private var textFieldText = ""
+    @State private var amount: String = ""
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        if let user = viewModel.currentUser {
-            Text("Wallet")
-            Text(String(format: "%.2f", user.balance))
-                .font(.largeTitle)
-                .bold()
-            VStack {
-                Button {
-                    showSheet.toggle()
-//                    viewModel.topUp()
-                } label : {
-                    Text("Top Up")
-                        .font(.title)
-                        .bold()
-                }
-                .frame(width: 100, height: 50)
-                .foregroundStyle(Color(.white))
-                .background(Color(.systemRed))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .padding(.top, 24)
-            }
-            .sheet(isPresented: $showSheet, content: {
-                VStack {
-                    // Top up functionality
-                    TextField("Enter amount", text: $textFieldText)
-                        .padding(14)
-                    Button {
+        NavigationStack {
+//            if let user = viewModel.currentUser {
+                VStack(spacing: 20) {
+                    // Balance Display
+                    VStack(spacing: 8) {
+                        Text("Total balance")
+                            .font(.title3)
+                            .foregroundStyle(Color(.secondaryLabel))
                         
-                    } label: {
-                        HStack {
-                            Text("Top Up")
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundStyle(Color(.white))
-                        .frame(width: UIScreen.main.bounds.width - 32, height: 48)
+                        // USER Balance
+                        Text(String(format: "%.2f PLN", viewModel.currentUser?.balance ?? 0.0))
+                            .contentTransition(.numericText())
+                            .font(.system(size: 44, weight: .bold))
                     }
-                    .background(Color(.systemBlue))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .padding(.top, 24)
+                    .padding(.top, 40)
+                    
+                    Spacer()
+                    
+                    // Top Up Button
+                    Button {
+                        showSheet.toggle()
+                    } label: {
+                        Text("Add money")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.white)
+                            .frame(width: UIScreen.main.bounds.width - 32, height: 50)
+                            .background(Color(.systemBlue))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    .padding(.bottom, 30)
                 }
-                .presentationDetents([.height(200)])
-            })
-            .padding()
+                .navigationTitle("Wallet")
+                .sheet(isPresented: $showSheet) {
+                    TopUpSheetView(amount: $amount)
+                }
+            }
         }
     }
-}
+//}
 
 
 #Preview {
     WalletView()
+        //.environmentObject(AuthViewModel())
 }

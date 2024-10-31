@@ -8,11 +8,29 @@
 import SwiftUI
 
 struct ExchangeSheetView: View {
+    let rate: Rate
+    var transactionType: String
+    @Binding var amount: String
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack {
+            Text("\(transactionType) \(rate.code)")
+            VStack {
+                TextField("0", text: $amount)
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .multilineTextAlignment(.center)
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.horizontal)
+                // Real time conversion 
+            }
+        }
+        .padding()
     }
 }
 
 #Preview {
-    ExchangeSheetView()
+    ExchangeSheetView(rate: Rate(currency: "US Dollar", code: "USD", mid: 0.0), transactionType: "Buy", amount: .constant("0"))
+
 }

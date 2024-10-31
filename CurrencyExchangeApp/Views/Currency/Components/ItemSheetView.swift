@@ -24,7 +24,6 @@ struct ItemSheetView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            // Currency Info Section
             VStack(alignment: .leading, spacing: -5) {
                 Text(rate.code)
                     .font(.largeTitle)
@@ -37,7 +36,6 @@ struct ItemSheetView: View {
             
             Divider()
             
-            // Rate Info Section
             VStack(alignment: .leading) {
                 Text(String(format: "%.2f", rate.mid))
                     .fontWeight(.semibold)
@@ -47,7 +45,6 @@ struct ItemSheetView: View {
                     .fontWeight(.semibold)
             }
             
-            // Buttons Section
             HStack(spacing: 15) {
                 Button {
                     sheetType = .buy
@@ -81,9 +78,8 @@ struct ItemSheetView: View {
                 Group {
                     switch type {
                     case .buy:
-                        BuyView(rate: rate)
-                    case .sell:
-                        SellView(rate: rate)
+                        ExchangeSheetView(rate: rate, transactionType: "Buy", amount: .constant("0"))                    case .sell:
+                        ExchangeSheetView(rate: rate, transactionType: "Sell", amount: .constant("0"))
                     }
                 }
                 .navigationTitle(type == .buy ? "Buy \(rate.code)" : "Sell \(rate.code)")

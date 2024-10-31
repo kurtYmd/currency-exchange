@@ -42,6 +42,7 @@ struct CurrencyListView: View {
             .navigationTitle("Currencies")
             .sheet(item: $selectedRate) { rate in
                 ItemSheetView(rate: rate)
+                    .presentationDetents([.height(250)])
             }
             .refreshable {
                 viewModel.fetchCurrencyRates()
