@@ -28,16 +28,21 @@ class AuthViewModel: ObservableObject {
     }
     
     func topUp(amount: Double) {
-            currentUser?.balance = (currentUser?.balance ?? 0.0) + amount
-            
+        guard let user = currentUser else { return }
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let userRef = Firestore.firestore().collection("users").document(uid)
-            do {
-                try userRef.setData(["balance": currentUser!.balance], merge: true)
-            } catch {
-                print("Failed to update balance with error: \(error.localizedDescription)")
+        
+        self.currentUser?.balance += amount
+            
+        userRef.setData(["balance": currentUser?.balance ?? 0], merge: true) { error in
+                if let error = error {
+                    print("Failed to update balance with error: \(error.localizedDescription)")
+                } else {
+                    print("Balance updated successfully!")
+                }
             }
-        }
+        
+    }
     
     func signIn(withEmail email: String, password: String) async throws {
         do {
@@ -104,11 +109,13 @@ class AuthViewModel: ObservableObject {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let userRef = Firestore.firestore().collection("users").document(uid)
         
-        do {
-            try userRef.setData([field: value], merge: true)
-        } catch {
-            print("Failed to update \(field) with error: \(error.localizedDescription)")
-        }
+        userRef.setData([field: value], merge: true) { error in
+                if let error = error {
+                    print("Failed to update \(field) with error: \(error.localizedDescription)")
+                } else {
+                    print("\(field) updated successfully!")
+                }
+            }
     }
     
     @MainActor
