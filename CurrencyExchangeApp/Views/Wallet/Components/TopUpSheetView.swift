@@ -45,6 +45,7 @@ struct TopUpSheetView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .padding(.horizontal)
                 .disabled(amount.isEmpty)
+                .opacity(!amount.isEmpty ? 1.0 : 0.5)
                 
                 Spacer()
             }
