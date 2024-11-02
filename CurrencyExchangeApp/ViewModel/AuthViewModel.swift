@@ -8,7 +8,6 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
-import Combine
 
 protocol AuthenticationFormProtocol {
     var formIsValid: Bool { get }
@@ -17,7 +16,7 @@ protocol AuthenticationFormProtocol {
 class AuthViewModel: ObservableObject {
     @Published var userSession: FirebaseAuth.User?
     @Published var currentUser: User?
-    private var cancellables = Set<AnyCancellable>()
+    
     
     init() {
         self.userSession = Auth.auth().currentUser
