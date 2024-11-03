@@ -9,8 +9,13 @@ import SwiftUI
 
 struct TopUpSheetView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var viewModel: AuthViewModel
+    @EnvironmentObject private var viewModel: AuthViewModel
     @Binding var amount: String
+    @State private var isLoading = false
+    @State private var showError = false
+    @State private var errorMessage = ""
+    @State private var topUpTask: Task<Void, Never>?
+        
     
     var body: some View {
         NavigationStack {
@@ -19,6 +24,7 @@ struct TopUpSheetView: View {
                     .font(.title2)
                     .foregroundStyle(Color(.secondaryLabel))
                     .padding(.top)
+                
                 VStack {
                     TextField("0", text: $amount)
                         .keyboardType(.decimalPad)
@@ -29,12 +35,7 @@ struct TopUpSheetView: View {
                         .padding(.horizontal)
                 }
                 
-                Button {
-                    if Double(amount) != nil {
-                        viewModel.topUp(amount: Double(amount) ?? 0.0)
-                        dismiss()
-                    }
-                } label: {
+                Button(action: topUp) {
                     Text("Confirm")
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.white)
@@ -64,6 +65,31 @@ struct TopUpSheetView: View {
             }
         }
         .presentationDetents([.height(250)])
+    }
+    
+    func topUp() {
+        guard let topUpAmount = Double(amount) else { return }
+        isLoading = true
+
+        topUpTask?.cancel()
+        
+        topUpTask = Task { @MainActor in
+            do {
+                try await viewModel.topUp(amount: topUpAmount)
+                if !Task.isCancelled {
+                    amount = "0"
+                    isLoading = false
+                    dismiss()
+                }
+            } catch {
+                if !Task.isCancelled {
+                    errorMessage = error.localizedDescription
+                    showError = true
+                    isLoading = false
+                }
+            }
+            topUpTask = nil
+        }
     }
 }
 

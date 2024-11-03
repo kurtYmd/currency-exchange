@@ -13,12 +13,15 @@ protocol AuthenticationFormProtocol {
     var formIsValid: Bool { get }
 }
 
+@MainActor
 class AuthViewModel: ObservableObject {
     @Published var userSession: FirebaseAuth.User?
     @Published var currentUser: User?
+    private var authStateHandle: AuthStateDidChangeListenerHandle?
     
     
     init() {
+        print("DEBUG: AuthViewModel initialized")
         self.userSession = Auth.auth().currentUser
         
         Task {
@@ -26,20 +29,29 @@ class AuthViewModel: ObservableObject {
         }
     }
     
-    func topUp(amount: Double) {
+    private func setupAuthListener() {
+        authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            self?.userSession = user
+            
+            if user == nil {
+                self?.currentUser = nil
+            } else {
+                Task {
+                    await self?.fetchUser()
+                }
+            }
+        }
+    }
+    
+    func topUp(amount: Double) async throws {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let userRef = Firestore.firestore().collection("users").document(uid)
         
-        self.currentUser?.balance += amount
-            
-        userRef.setData(["balance": currentUser?.balance ?? 0], merge: true) { error in
-                if let error = error {
-                    print("Failed to update balance with error: \(error.localizedDescription)")
-                } else {
-                    print("Balance updated successfully!")
-                }
-            }
-        
+        let newBalance = (currentUser?.balance ?? 0) + amount
+        currentUser?.balance = newBalance
+                
+        try await userRef.setData(["balance": newBalance], merge: true)
+        print("Balance updated successfully!")
     }
     
     func signIn(withEmail email: String, password: String) async throws {
@@ -71,11 +83,7 @@ class AuthViewModel: ObservableObject {
     
     func signOut() {
         do {
-            try Auth.auth().signOut() // Signs out user on backend
-            DispatchQueue.main.async {
-                self.userSession = nil
-                self.currentUser = nil
-            }
+            try Auth.auth().signOut()
         } catch {
             print("Failed to sign out with error \(error.localizedDescription)")
         }
@@ -116,7 +124,6 @@ class AuthViewModel: ObservableObject {
             }
     }
     
-    @MainActor
     func fetchUser() async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         guard let snapshot = try? await Firestore.firestore().collection("users").document(uid).getDocument() else { return }
