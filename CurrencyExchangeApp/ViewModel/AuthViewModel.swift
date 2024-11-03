@@ -27,7 +27,6 @@ class AuthViewModel: ObservableObject {
     }
     
     func topUp(amount: Double) {
-        guard let user = currentUser else { return }
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let userRef = Firestore.firestore().collection("users").document(uid)
         
