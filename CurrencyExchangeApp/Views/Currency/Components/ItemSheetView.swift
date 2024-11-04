@@ -78,8 +78,9 @@ struct ItemSheetView: View {
                 Group {
                     switch type {
                     case .buy:
-                        ExchangeSheetView(rate: rate, transactionType: "Buy", amount: "0")                    case .sell:
-                        ExchangeSheetView(rate: rate, transactionType: "Sell", amount: "0")
+                        ExchangeSheetView(rate: rate, transactionType: "Buy", amount: "")
+                    case .sell:
+                        ExchangeSheetView(rate: rate, transactionType: "Sell", amount: "")
                     }
                 }
                 .navigationTitle(type == .buy ? "Buy \(rate.code)" : "Sell \(rate.code)")

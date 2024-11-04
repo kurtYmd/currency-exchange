@@ -46,5 +46,5 @@ struct ExchangeSheetView: View {
 }
 
 #Preview {
-    ExchangeSheetView(rate: Rate(currency: "US Dollar", code: "USD", mid: 0.0), transactionType: "Buy", amount: "0")
+    ExchangeSheetView(rate: Rate(currency: "US Dollar", code: "USD", mid: 0.0), transactionType: "Buy", amount: "")
 }

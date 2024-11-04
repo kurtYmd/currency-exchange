@@ -26,7 +26,7 @@ struct TopUpSheetView: View {
                     .padding(.top)
                 
                 VStack {
-                    TextField("0", text: $amount)
+                   TextField("0", text: $amount)
                         .keyboardType(.decimalPad)
                         .textFieldStyle(PlainTextFieldStyle())
                         .multilineTextAlignment(.center)
@@ -77,7 +77,7 @@ struct TopUpSheetView: View {
             do {
                 try await viewModel.topUp(amount: topUpAmount)
                 if !Task.isCancelled {
-                    amount = "0"
+                    amount = ""
                     isLoading = false
                     dismiss()
                 }
@@ -94,6 +94,6 @@ struct TopUpSheetView: View {
 }
 
 #Preview {
-    TopUpSheetView(amount: .constant("0"))
+    TopUpSheetView(amount: .constant(""))
                 .environmentObject(AuthViewModel())
 }

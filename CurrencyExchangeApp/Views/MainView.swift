@@ -24,7 +24,7 @@ struct MainView: View {
                         WalletView()
                     }
                 }
-                .tint(Color(.systemPink))
+                .tint(Color(.systemBlue))
             } else {
                 LoginView()
             }
