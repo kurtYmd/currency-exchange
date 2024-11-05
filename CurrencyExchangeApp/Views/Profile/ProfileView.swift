@@ -34,12 +34,7 @@ struct ProfileView: View {
                     }
                 }
                 
-                Section {
-                    Text("Version")
-                    Text("Version")
-                    Text("Version")
-                    Text("Version")
-                }
+                Spacer()
                 
                 Section {
                     Button {

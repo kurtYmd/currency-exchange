@@ -8,7 +8,7 @@
 import Foundation
 
 struct Rate: Codable, Identifiable {
-    let id: UUID = UUID()
+    let id: UUID
     let currency: String
     let code: String
     let mid: Double

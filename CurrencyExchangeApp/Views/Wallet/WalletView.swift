@@ -16,22 +16,23 @@ struct WalletView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                // Balance Display
                 VStack(spacing: 8) {
                     Text("Total balance")
                         .font(.title3)
                         .foregroundStyle(Color(.secondaryLabel))
                     
-                    // USER Balance
                     Text(String(format: "%.2f PLN", viewModel.currentUser?.balance ?? 0.0))
                         .contentTransition(.numericText())
                         .font(.system(size: 44, weight: .bold))
                 }
                 .padding(.top, 40)
                 
-                Spacer()
+                if viewModel.currentUser?.transactionHistory.isEmpty == true {
+                    ContentUnavailableView("No recent transactions", systemImage: "clock.fill")
+                } else {
+                    
+                }
                 
-                // Top Up Button
                 Button {
                     showSheet.toggle()
                 } label: {

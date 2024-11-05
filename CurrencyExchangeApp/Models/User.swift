@@ -12,6 +12,7 @@ struct User: Identifiable, Codable {
     var fullname: String
     var email: String
     var balance: Double = 0.0
+    var transactionHistory: [Transaction] = []
     
     var intials: String {
         let formatter = PersonNameComponentsFormatter()
@@ -21,8 +22,4 @@ struct User: Identifiable, Codable {
         }
         return ""
     }
-}
-
-extension User {
-    static var MOCK_USER = User(id: NSUUID().uuidString, fullname: "Bohdan Dmytruk", email: "bohdan@gmail.com")
 }
