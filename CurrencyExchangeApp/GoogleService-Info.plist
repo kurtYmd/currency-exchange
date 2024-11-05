@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyB5IjdkdXXL1RE8fufBS4hSHpmuwX3GXio</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1061993560790</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>kurtymd</string>
+	<key>PROJECT_ID</key>
+	<string>currency-exchange-app-un-8829c</string>
+	<key>STORAGE_BUCKET</key>
+	<string>currency-exchange-app-un-8829c.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1061993560790:ios:571764ef6f3f311125a777</string>
+</dict>
+</plist>
