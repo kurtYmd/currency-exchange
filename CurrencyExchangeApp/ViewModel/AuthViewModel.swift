@@ -17,7 +17,6 @@ protocol AuthenticationFormProtocol {
 class AuthViewModel: ObservableObject {
     @Published var userSession: FirebaseAuth.User?
     @Published var currentUser: User?
-    private var authStateHandle: AuthStateDidChangeListenerHandle?
     
     
     init() {
@@ -26,20 +25,6 @@ class AuthViewModel: ObservableObject {
         
         Task {
             await fetchUser()
-        }
-    }
-    
-    private func setupAuthListener() {
-        authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            self?.userSession = user
-            
-            if user == nil {
-                self?.currentUser = nil
-            } else {
-                Task {
-                    await self?.fetchUser()
-                }
-            }
         }
     }
     
