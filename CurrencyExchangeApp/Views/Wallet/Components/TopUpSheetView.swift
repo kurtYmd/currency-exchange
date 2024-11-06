@@ -34,6 +34,15 @@ struct TopUpSheetView: View {
                         .bold()
                         .padding(.horizontal)
                 }
+                if Int(amount) ?? 0 < 5 {
+                    Text("Minimum Amount 5 PLN")
+                        .foregroundStyle(Color.secondary)
+                        .font(.caption)
+                } else {
+                    Text("")
+                        .foregroundStyle(Color.secondary)
+                        .font(.caption)
+                }
                 
                 Button(action: topUp) {
                     Text("Confirm")
@@ -45,8 +54,9 @@ struct TopUpSheetView: View {
                 .background(Color(.systemBlue))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .padding(.horizontal)
-                .disabled(amount.isEmpty)
-                .opacity(!amount.isEmpty ? 1.0 : 0.5)
+                .disabled(Int(amount) ?? 0 < 5 && amount.isEmpty)
+                .opacity(!amount.isEmpty && Int(amount) ?? 0 >= 5 ? 1.0 : 0.5)
+                    
                 
                 Spacer()
             }

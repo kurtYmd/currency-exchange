@@ -103,5 +103,5 @@ struct ItemSheetView: View {
 }
 
 #Preview {
-    ItemSheetView(rate: Rate(id: UUID(), currency: "US Dollar", code: "USD", mid: 0.0))
+    ItemSheetView(rate: Rate(currency: "US Dollar", code: "USD", mid: 0.0))
 }
