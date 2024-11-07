@@ -8,13 +8,14 @@
 import SwiftUI
 
 struct ExchangeSheetView: View {
+    @Environment(\.dismiss) private var dismiss
     let rate: Rate
-    var transactionType: String
+    @State var transactionType: TransactionType
+    @State var isPresented = false
     @State var amount: String
     
     var body: some View {
-        VStack {
-            //Text("\(transactionType) \(rate.code)")
+        NavigationStack {
             VStack {
                 TextField("0", text: $amount)
                     .keyboardType(.decimalPad)
@@ -23,28 +24,51 @@ struct ExchangeSheetView: View {
                     .font(.largeTitle)
                     .bold()
                     .padding(.horizontal)
-                // Real time conversion
-                Button {
-                    // Handle conversion
-                } label: {
-                    //create Extension to handle label logic
-                        Text(amount.isEmpty || amount == "0" ? "\(transactionType) \(rate.code)": "\(transactionType) \(amount) \(rate.code)")
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 48)
+            }
+            .navigationTitle(transactionType == .buy ? "Buy \(rate.code)" : "Sell \(rate.code)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Cancel")
+                    }
                 }
-                .background(Color(.systemBlue))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .padding(.horizontal)
-                .disabled(amount.isEmpty)
-                .opacity(!amount.isEmpty ? 1.0 : 0.5)
+                ToolbarItem(placement: .topBarTrailing) {
+                    if transactionType == .buy {
+                        Button {
+                            // Handle buy
+                            isPresented = true
+                        } label: {
+                            Text("Buy")
+                        }
+                        // Handle amount validation
+                        .disabled(amount.isEmpty)
+                    } else if transactionType == .sell {
+                        Button {
+                            isPresented = true
+                            // Handle sell
+                        } label: {
+                            Text("Sell")
+                        }
+                        // Handle amount validation
+                        .disabled(amount.isEmpty)
+                    }
+                }
+            }
+            .confirmationDialog("Transaction Confirmation", isPresented: $isPresented) {
+                Button((transactionType == .buy ? "Buy": "Sell") + " \(amount) \(rate.code)", role: .destructive) {
+                    isPresented = false
+                }
+                Button ("Cancel Transaction", role: .cancel) { }
+            } message: {
+                Text("Are you sure you want to " + (transactionType == .buy ? "buy": "sell") + " \(amount) \(rate.code)")
             }
         }
-        .padding()
     }
 }
 
 #Preview {
-    ExchangeSheetView(rate: Rate(currency: "US Dollar", code: "USD", mid: 0.0), transactionType: "Buy", amount: "")
+    ExchangeSheetView(rate: Rate(currency: "US Dollar", code: "USD", mid: 0.0), transactionType: .buy, amount: "")
 }

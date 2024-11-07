@@ -46,7 +46,7 @@ struct ProfileView: View {
                     } label : {
                         Text("Sign Out")
                     }
-                        .foregroundStyle(Color(.systemRed))
+                    .foregroundStyle(Color(.systemRed))
                     
                     Button {
                         deleteAccountIsPresented = true
