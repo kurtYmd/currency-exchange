@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ItemSheetView: View {
     let rate: Rate
+    @Environment(\.dismiss) private var dismiss
     @State private var sheetType: SheetType? = nil
     
     enum SheetType: Identifiable {
@@ -24,15 +25,28 @@ struct ItemSheetView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: -5) {
-                Text(rate.code)
-                    .font(.largeTitle)
-                    .bold()
-                Text(rate.currency.capitalized)
-                    .foregroundStyle(Color(.secondaryLabel))
-                    .font(.caption)
-                    .fontWeight(.semibold)
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: -5) {
+                    Text(rate.code)
+                        .font(.largeTitle)
+                        .bold()
+                    Text(rate.currency.capitalized)
+                        .foregroundStyle(Color(.secondaryLabel))
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                }
+                
+                Spacer()
+                
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(Color.secondary)
+                }
             }
+            .padding(.top)
             
             Divider()
             
