@@ -10,18 +10,8 @@ import SwiftUI
 struct ItemSheetView: View {
     let rate: Rate
     @Environment(\.dismiss) private var dismiss
-    @State private var sheetType: SheetType? = nil
-    
-    enum SheetType: Identifiable {
-        case buy, sell
-        
-        var id: Int {
-            switch self {
-            case .buy: return 0
-            case .sell: return 1
-            }
-        }
-    }
+    @State private var isPresented = false
+    @State private var transactionType: TransactionType = .buy
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -61,7 +51,7 @@ struct ItemSheetView: View {
             
             HStack(spacing: 15) {
                 Button {
-                    sheetType = .buy
+                    presentExchangeSheet(for: .buy)
                 } label: {
                     Text("Buy")
                         .fontWeight(.semibold)
@@ -73,7 +63,7 @@ struct ItemSheetView: View {
                 }
                 
                 Button {
-                    sheetType = .sell
+                    presentExchangeSheet(for: .sell)
                 } label: {
                     Text("Sell")
                         .fontWeight(.semibold)
@@ -87,32 +77,14 @@ struct ItemSheetView: View {
             .padding(.top, 10)
         }
         .padding()
-        .sheet(item: $sheetType) { type in
-            NavigationStack {
-                Group {
-                    switch type {
-                    case .buy:
-                        ExchangeSheetView(rate: rate, transactionType: "Buy", amount: "")
-                    case .sell:
-                        ExchangeSheetView(rate: rate, transactionType: "Sell", amount: "")
-                    }
-                }
-                .navigationTitle(type == .buy ? "Buy \(rate.code)" : "Sell \(rate.code)")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            sheetType = nil
-                        } label : {
-                            Image(systemName: "xmark.circle.fill")
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Color.secondary)
-                        }
-                    }
-                }
-            }
-            .presentationDetents([.height(200)])
+        .sheet(isPresented: $isPresented) {
+            ExchangeSheetView(rate: rate, transactionType: transactionType, amount: "")
+                .presentationDetents([.height(200)])
         }
+    }
+    private func presentExchangeSheet(for type: TransactionType) {
+        transactionType = type
+        isPresented = true
     }
 }
 
