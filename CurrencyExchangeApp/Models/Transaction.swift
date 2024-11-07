@@ -12,7 +12,7 @@ struct Transaction: Codable {
     var currencyFrom: String
     var currencyTo: String
     var amount: Double
-    var type: String
+    var type: TransactionType
     var date: Date
     
 //    func toDictionary() -> [String: Any] {
