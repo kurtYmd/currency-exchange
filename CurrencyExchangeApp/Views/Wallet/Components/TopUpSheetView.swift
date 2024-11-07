@@ -11,6 +11,7 @@ struct TopUpSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var viewModel: AuthViewModel
     @Binding var amount: String
+    @State private var isPresented = false
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
@@ -43,62 +44,60 @@ struct TopUpSheetView: View {
                         .foregroundStyle(Color.secondary)
                         .font(.caption)
                 }
-                
-                Button(action: topUp) {
-                    Text("Confirm")
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                }
-                .background(Color(.systemBlue))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .padding(.horizontal)
-                .disabled(Int(amount) ?? 0 < 5 && amount.isEmpty)
-                .opacity(!amount.isEmpty && Int(amount) ?? 0 >= 5 ? 1.0 : 0.5)
-                    
-                
+
                 Spacer()
+                
             }
             .navigationTitle("Top Up")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        dismiss()
+                        if amount.isEmpty {
+                            dismiss()
+                            amount = ""
+                        } else {
+                            isPresented = true
+                        }
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color.secondary)
+                        Text("Cancel")
                     }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: topUp) {
+                        Text("Add")
+                    }
+                    .disabled((Int(amount) ?? 0) < 5)
                 }
             }
         }
-        .presentationDetents([.height(250)])
+        .presentationDetents([.height(200)])
+        .confirmationDialog("Alert", isPresented: $isPresented) {
+            Button ("Cancel Top-Up", role: .destructive) {
+                amount = ""
+                dismiss()
+            }
+            Button("Continue", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to cancel the top-up?")
+        }
     }
     
     func topUp() {
-        guard let topUpAmount = Double(amount) else { return }
-        isLoading = true
-
-        topUpTask?.cancel()
+        guard let topUpAmount = Double(amount), topUpAmount >= 5 else { return }
         
-        topUpTask = Task { @MainActor in
+        isLoading = true
+        Task {
             do {
                 try await viewModel.topUp(amount: topUpAmount)
-                if !Task.isCancelled {
-                    amount = ""
-                    isLoading = false
-                    dismiss()
-                }
+                amount = ""
+                isLoading = false
+                dismiss()
             } catch {
-                if !Task.isCancelled {
-                    errorMessage = error.localizedDescription
-                    showError = true
-                    isLoading = false
-                }
+                errorMessage = error.localizedDescription
+                showError = true
+                isLoading = false
             }
-            topUpTask = nil
         }
     }
 }
