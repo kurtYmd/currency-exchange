@@ -32,12 +32,21 @@ class AuthViewModel: ObservableObject {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let userRef = Firestore.firestore().collection("users").document(uid)
         
-        let newBalance = (currentUser?.balance ?? 0) + amount
-        currentUser?.balance = newBalance
-                
-        try await userRef.setData(["balance": newBalance], merge: true)
-        print("Balance updated successfully!")
+        // Increment only the PLN balance
+        currentUser?.balance["PLN"] = (currentUser?.balance["PLN"] ?? 0.0) + amount
+        
+        // Save the updated balance to Firestore
+        try await userRef.setData(["balance": currentUser?.balance ?? [:]], merge: true)
+        print("Balance in PLN updated successfully!")
     }
+    
+//    func getTotalBalance() async throws -> Double {
+//        guard let uid = Auth.auth().currentUser?.uid else { return 0.0 }
+//        let userRef = Firestore.firestore().collection("users").document(uid)
+//        
+//        let snapshot = try await userRef.getDocument()
+//        guard let data = snapshot.data() else { return 0.0 }
+//    }
     
     func signIn(withEmail email: String, password: String) async throws {
         do {

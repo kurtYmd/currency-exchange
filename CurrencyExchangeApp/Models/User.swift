@@ -8,11 +8,12 @@
 import Foundation
 
 struct User: Identifiable, Codable {
-    var id: String
-    var fullname: String
-    var email: String
-    var balance: Double = 0.0
+    let id: String
+    let fullname: String
+    let email: String
+    var balance = ["PLN": 0.0]
     var transactionHistory: [Transaction] = []
+    var watchlists: [Watchlist] = [Watchlist.defaultWatchlist]
     
     var intials: String {
         let formatter = PersonNameComponentsFormatter()

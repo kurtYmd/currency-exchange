@@ -14,14 +14,14 @@ struct MainView: View {
         Group {
             if viewModel.userSession != nil {
                 TabView {
-                    Tab("Profile", systemImage: "person.circle.fill") {
-                        ProfileView()
+                    Tab("Wallet", systemImage: "wallet.bifold.fill") {
+                        WalletView()
                     }
                     Tab("Exchange", systemImage: "polishzlotysign.arrow.trianglehead.counterclockwise.rotate.90") {
                         CurrencyListView()
                     }
-                    Tab("Wallet", systemImage: "wallet.bifold.fill") {
-                        WalletView()
+                    Tab("Profile", systemImage: "person.circle.fill") {
+                        ProfileView()
                     }
                 }
                 .tint(Color(.systemBlue))
