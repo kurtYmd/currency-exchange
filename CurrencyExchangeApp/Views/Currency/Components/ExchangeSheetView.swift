@@ -9,61 +9,68 @@ import SwiftUI
 
 struct ExchangeSheetView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var viewModel: AuthViewModel
     let rate: Rate
     @State var transactionType: TransactionType
     @State var isPresented = false
     @State var amount: String
     
     var body: some View {
-        NavigationStack {
-            VStack {
-                TextField("0", text: $amount)
-                    .keyboardType(.decimalPad)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .multilineTextAlignment(.center)
-                    .font(.largeTitle)
-                    .bold()
-                    .padding(.horizontal)
-            }
-            .navigationTitle(transactionType == .buy ? "Buy \(rate.code)" : "Sell \(rate.code)")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Cancel")
+        if viewModel.currentUser != nil {
+            NavigationStack {
+                VStack {
+                    TextField("0", text: $amount)
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(PlainTextFieldStyle())
+                        .multilineTextAlignment(.center)
+                        .font(.largeTitle)
+                        .bold()
+                        .padding(.horizontal)
+                }
+                .navigationTitle(transactionType == .buy ? "Buy \(rate.code)" : "Sell \(rate.code)")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Text("Cancel")
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        if transactionType == .buy {
+                            Button {
+                                Task {
+                                    try await viewModel.buyCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid)
+                                }
+                                isPresented = true
+                            } label: {
+                                Text("Buy")
+                            }
+                            // Handle amount validation
+                            .disabled(amount.isEmpty)
+                        } else if transactionType == .sell {
+                            Button {
+                                Task {
+                                    try await viewModel.sellCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid)
+                                }
+                                isPresented = true
+                            } label: {
+                                Text("Sell")
+                            }
+                            // Handle amount validation
+                            .disabled(amount.isEmpty)
+                        }
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if transactionType == .buy {
-                        Button {
-                            // Handle buy
-                            isPresented = true
-                        } label: {
-                            Text("Buy")
-                        }
-                        // Handle amount validation
-                        .disabled(amount.isEmpty)
-                    } else if transactionType == .sell {
-                        Button {
-                            isPresented = true
-                            // Handle sell
-                        } label: {
-                            Text("Sell")
-                        }
-                        // Handle amount validation
-                        .disabled(amount.isEmpty)
+                .confirmationDialog("Transaction Confirmation", isPresented: $isPresented) {
+                    Button((transactionType == .buy ? "Buy": "Sell") + " \(amount) \(rate.code)", role: .destructive) {
+                        isPresented = false
                     }
+                    Button ("Cancel Transaction", role: .cancel) { }
+                } message: {
+                    Text("Are you sure you want to " + (transactionType == .buy ? "buy": "sell") + " \(amount) \(rate.code)")
                 }
-            }
-            .confirmationDialog("Transaction Confirmation", isPresented: $isPresented) {
-                Button((transactionType == .buy ? "Buy": "Sell") + " \(amount) \(rate.code)", role: .destructive) {
-                    isPresented = false
-                }
-                Button ("Cancel Transaction", role: .cancel) { }
-            } message: {
-                Text("Are you sure you want to " + (transactionType == .buy ? "buy": "sell") + " \(amount) \(rate.code)")
             }
         }
     }

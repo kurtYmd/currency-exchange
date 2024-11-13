@@ -18,7 +18,6 @@ class AuthViewModel: ObservableObject {
     @Published var userSession: FirebaseAuth.User?
     @Published var currentUser: User?
     
-    
     init() {
         print("DEBUG: AuthViewModel initialized")
         self.userSession = Auth.auth().currentUser
@@ -40,13 +39,35 @@ class AuthViewModel: ObservableObject {
         print("Balance in PLN updated successfully!")
     }
     
-//    func getTotalBalance() async throws -> Double {
-//        guard let uid = Auth.auth().currentUser?.uid else { return 0.0 }
-//        let userRef = Firestore.firestore().collection("users").document(uid)
-//        
-//        let snapshot = try await userRef.getDocument()
-//        guard let data = snapshot.data() else { return 0.0 }
-//    }
+    func buyCurrency(amount: Double, currencyCode: String, rate: Double) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let userRef = Firestore.firestore().collection("users").document(uid)
+        
+        guard currentUser?.balance["PLN"] ?? 0 >= amount else { return }
+        
+        let convertedValue = amount * rate
+        currentUser?.balance["PLN"]! -= convertedValue
+        currentUser?.balance[currencyCode, default: 0] += amount
+        
+        try await userRef.setData(["balance": currentUser?.balance ?? [:]], merge: true)
+        
+        // Add transaction to history
+    }
+    
+    func sellCurrency(amount: Double, currencyCode: String, rate: Double) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let userRef = Firestore.firestore().collection("users").document(uid)
+        
+        guard currentUser?.balance[currencyCode] ?? 0 >= amount else { return }
+        
+        let convertedAmount = amount * rate
+        currentUser?.balance[currencyCode]! -= amount
+        currentUser?.balance["PLN"]! += convertedAmount
+        
+        try await userRef.setData(["balance": currentUser?.balance ?? [:]], merge: true)
+        
+        // Add transaction to history
+    }
     
     func signIn(withEmail email: String, password: String) async throws {
         do {
