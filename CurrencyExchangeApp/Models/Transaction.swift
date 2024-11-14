@@ -9,19 +9,28 @@ import Foundation
 import FirebaseFirestore
 
 struct Transaction: Codable {
-    var currencyFrom: String
-    var currencyTo: String
-    var amount: Double
-    var type: TransactionType
-    var date: Date
+    let currencyFrom: String?
+    let currencyTo: String?
+    let amount: Double
+    let type: TransactionType
+    let date: Date
     
-//    func toDictionary() -> [String: Any] {
-//            return [
-//                "currencyFrom": currencyFrom,
-//                "currencyTo": currencyTo,
-//                "amount": amount,
-//                "type": type,
-//                "date": Timestamp(date: date) // Firestore uses Timestamp for dates
-//            ]
-//        }
+    init(currencyFrom: String? = nil, currencyTo: String? = nil, amount: Double, type: TransactionType, date: Date) {
+        self.currencyFrom = currencyFrom
+        self.currencyTo = currencyTo
+        self.amount = amount
+        self.type = type
+        self.date = date
+    }
+    
+    func toDictionary() -> [String: Any] {
+        var dict: [String: Any] = [
+            "amount": amount,
+            "type": type.rawValue,
+            "date": Timestamp(date: date)
+        ]
+        if let currencyFrom = currencyFrom {dict["currencyFrom"] = currencyFrom }
+        if let currencyTo = currencyTo { dict["currencyTo"] = currencyTo }
+        return dict
+    }
 }

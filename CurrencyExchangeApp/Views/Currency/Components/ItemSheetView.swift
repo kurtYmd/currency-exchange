@@ -87,7 +87,3 @@ struct ItemSheetView: View {
         isPresented = true
     }
 }
-
-#Preview {
-    ItemSheetView(rate: Rate(currency: "US Dollar", code: "USD", mid: 0.0))
-}

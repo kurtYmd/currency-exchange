@@ -18,7 +18,6 @@ class AuthViewModel: ObservableObject {
     @Published var userSession: FirebaseAuth.User?
     @Published var currentUser: User?
     
-    
     init() {
         print("DEBUG: AuthViewModel initialized")
         self.userSession = Auth.auth().currentUser
@@ -32,11 +31,68 @@ class AuthViewModel: ObservableObject {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let userRef = Firestore.firestore().collection("users").document(uid)
         
-        let newBalance = (currentUser?.balance ?? 0) + amount
-        currentUser?.balance = newBalance
-                
-        try await userRef.setData(["balance": newBalance], merge: true)
-        print("Balance updated successfully!")
+        currentUser?.balance["PLN"] = (currentUser?.balance["PLN"] ?? 0.0) + amount
+        
+        // Save the updated balance to Firestore
+        try await userRef.setData(["balance": currentUser?.balance ?? [:]], merge: true)
+        print("Balance in PLN updated successfully!")
+        
+        let transaction = Transaction(currencyFrom: nil, currencyTo: "PLN", amount: amount, type: .topUp, date: Date())
+        let transactionData = transaction.toDictionary()
+        
+        // Add transaction to Firebase
+        try await userRef.collection("transactionHistory").addDocument(data: transactionData)
+        currentUser?.transactionHistory.append(transaction)
+        
+        // Convert transactionHistory to an array of dictionaries before saving it to Firestore
+        let transactionHistoryData = currentUser?.transactionHistory.map { $0.toDictionary() } ?? []
+       
+        // Save the updated transaction history to Firestore
+        try await userRef.setData(["transactionHistory": transactionHistoryData], merge: true)
+    }
+    
+    func buyCurrency(amount: Double, currencyCode: String, rate: Double) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let userRef = Firestore.firestore().collection("users").document(uid)
+        
+        guard currentUser?.balance["PLN"] ?? 0 >= amount else { return }
+        
+        let convertedValue = amount * rate
+        currentUser?.balance["PLN"]! -= convertedValue
+        currentUser?.balance[currencyCode, default: 0] += amount
+        
+        try await userRef.setData(["balance": currentUser?.balance ?? [:]], merge: true)
+        
+        let transaction = Transaction(currencyFrom: "PLN", currencyTo: currencyCode, amount: amount, type: .buy, date: Date())
+        let transactionData = transaction.toDictionary()
+        
+        try await userRef.collection("transactionHistory").addDocument(data: transactionData)
+        currentUser?.transactionHistory.append(transaction)
+        
+        let transactionHistoryData = currentUser?.transactionHistory.map { $0.toDictionary() } ?? []
+        try await userRef.setData(["transactionHistory": transactionHistoryData], merge: true)
+    }
+    
+    func sellCurrency(amount: Double, currencyCode: String, rate: Double) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let userRef = Firestore.firestore().collection("users").document(uid)
+        
+        guard currentUser?.balance[currencyCode] ?? 0 >= amount else { return }
+        
+        let convertedAmount = amount * rate
+        currentUser?.balance[currencyCode]! -= amount
+        currentUser?.balance["PLN"]! += convertedAmount
+        
+        try await userRef.setData(["balance": currentUser?.balance ?? [:]], merge: true)
+        
+        let transaction = Transaction(currencyFrom: currencyCode, currencyTo: "PLN", amount: amount, type: .sell, date: Date())
+        let transactionData = transaction.toDictionary()
+        
+        try await userRef.collection("transactionHistory").addDocument(data: transactionData)
+        currentUser?.transactionHistory.append(transaction)
+        
+        let transactionHistoryData = currentUser?.transactionHistory.map { $0.toDictionary() } ?? []
+        try await userRef.setData(["transactionHistory": transactionHistoryData], merge: true)
     }
     
     func signIn(withEmail email: String, password: String) async throws {
