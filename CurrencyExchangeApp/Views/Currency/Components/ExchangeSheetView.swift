@@ -40,9 +40,6 @@ struct ExchangeSheetView: View {
                     ToolbarItem(placement: .topBarTrailing) {
                         if transactionType == .buy {
                             Button {
-                                Task {
-                                    try await viewModel.buyCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid)
-                                }
                                 isPresented = true
                             } label: {
                                 Text("Buy")
@@ -51,9 +48,6 @@ struct ExchangeSheetView: View {
                             .disabled(amount.isEmpty)
                         } else if transactionType == .sell {
                             Button {
-                                Task {
-                                    try await viewModel.sellCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid)
-                                }
                                 isPresented = true
                             } label: {
                                 Text("Sell")
@@ -64,8 +58,20 @@ struct ExchangeSheetView: View {
                     }
                 }
                 .confirmationDialog("Transaction Confirmation", isPresented: $isPresented) {
-                    Button((transactionType == .buy ? "Buy": "Sell") + " \(amount) \(rate.code)", role: .destructive) {
-                        isPresented = false
+                    if transactionType == .buy {
+                        Button("Buy \(amount) \(rate.code)", role: .destructive) {
+                            Task {
+                                try await viewModel.buyCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid)
+                            }
+                            isPresented = false
+                        }
+                    } else {
+                        Button("Sell \(amount) \(rate.code)", role: .destructive) {
+                            Task {
+                                try await viewModel.sellCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid)
+                            }
+                            isPresented = false
+                        }
                     }
                     Button ("Cancel Transaction", role: .cancel) { }
                 } message: {
