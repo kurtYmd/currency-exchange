@@ -51,7 +51,13 @@ struct WalletView: View {
                 if viewModel.currentUser?.transactionHistory.isEmpty == true {
                     ContentUnavailableView("No recent transactions", systemImage: "clock.fill")
                 } else {
-                    // Transactions
+                    ForEach(viewModel.currentUser?.transactionHistory ?? [], id: \.date) { transaction in
+                        HStack {
+                            Text("\(transaction.currencyFrom)")
+                            Text("\(transaction.currencyTo)")
+                            Text("\(transaction.amount)")
+                        }
+                    }
                 }
             }
             .navigationTitle("Wallet")
