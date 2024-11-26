@@ -15,6 +15,7 @@ struct CurrencyListView: View {
     
     var body: some View {
         NavigationStack {
+            List {
             //header
             HStack {
                 //Searchbar
@@ -36,31 +37,32 @@ struct CurrencyListView: View {
                 Text("My Currencies")
             }
 
-            List(viewModel.rates, id: \.code) { rate in
-                Button {
-                    selectedRate = rate
-                    print("Selected Rate: \(String(describing: selectedRate))")
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(rate.code)
-                                .foregroundStyle(Color.primary)
-                                .font(.title2)
-                                .bold()
-                            Text(rate.currency.capitalized)
-                                .foregroundStyle(Color(.secondaryLabel))
-                                .font(.caption)
+                ForEach(viewModel.rates, id: \.code) { rate in
+                    Button {
+                        selectedRate = rate
+                        print("Selected Rate: \(String(describing: selectedRate))")
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(rate.code)
+                                    .foregroundStyle(Color.primary)
+                                    .font(.title2)
+                                    .bold()
+                                Text(rate.currency.capitalized)
+                                    .foregroundStyle(Color(.secondaryLabel))
+                                    .font(.caption)
+                            }
+                            Spacer()
+                            VStack {
+                                Text(String(format: "%.4f", rate.mid) + "zł")
+                                    .foregroundStyle(Color.primary)
+                                    .font(.headline)
+                            }
                         }
-                        Spacer()
-                        VStack {
-                            Text(String(format: "%.4f", rate.mid) + "zł")
-                                .foregroundStyle(Color.primary)
-                                .font(.headline)
-                        }
+                        .contentShape(Rectangle())
                     }
-                    .contentShape(Rectangle())
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .listStyle(.plain)
             .navigationTitle("Currencies")
