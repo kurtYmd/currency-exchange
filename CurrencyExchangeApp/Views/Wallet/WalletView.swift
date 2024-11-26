@@ -16,55 +16,171 @@ struct WalletView: View {
     var body: some View {
         if viewModel.currentUser != nil {
             NavigationStack {
-                VStack(spacing: 20) {
-                    VStack(spacing: 8) {
-                        Text("Total balance")
-                            .font(.title3)
-                            .foregroundStyle(Color(.secondaryLabel))
-                        
-                        Text(String(format: "%.2f PLN", viewModel.currentUser?.balance["PLN"] ?? 0.0))
-                            .contentTransition(.numericText())
-                            .font(.system(size: 44, weight: .bold))
+                List {
+                    Section {
+                        listOfUserCurrency
+                    } header: {
+                        VStack(spacing: 8) {
+                            userTotalBalance
+                            addMoneyButton
+                        }
+                        .background(Color.clear)
+                        .padding(.vertical)
+                        .textCase(nil)
                     }
-                    .padding(.top, 40)
+                    
+                    Section {
+                        NavigationLink(destination: transactionHistory) {
+                            transactionHistoryLabel
+                        }
+                    }
+                    
+                }
+                .buttonStyle(BorderlessButtonStyle())
+                .listStyle(InsetGroupedListStyle())
+                .navigationTitle("Wallet")
+                .sheet(isPresented: $showSheet) {
+                    TopUpSheetView(amount: $amount)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    fileprivate var transactionHistory: some View {
+        if viewModel.currentUser?.transactionHistory.isEmpty == true {
+            ContentUnavailableView("No recent transactions", systemImage: "clock.fill")
+        } else {
+            ScrollView {
+                ForEach(viewModel.currentUser?.transactionHistory ?? [], id: \.date) { transaction in
+                    transactionRow(transaction: transaction)
+                        .padding(.horizontal)
+                }
+            }
+        }
+    }
+    
+    fileprivate var transactionHistoryLabel: some View {
+        HStack {
+            Image(systemName: "list.star")
+                .modifier(Icon(shape: AnyShape(RoundedRectangle(cornerRadius: 10))))
+            Text("Transaction history")
+                .foregroundStyle(Color(.secondaryLabel))
+        }
+    }
+    
+    @ViewBuilder
+    fileprivate func transactionRow(transaction: Transaction) -> some View {
+        if transaction.type == .buy || transaction.type == .sell {
+            HStack {
+                Image(systemName: "polishzlotysign.arrow.circlepath")
+                    .modifier(Icon())
+                VStack(alignment: .leading) {
                     HStack {
-                        Button {
-                            showSheet.toggle()
-                        } label: {
-                            Text("Add Money")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Color.white)
-                                .frame(width: 120, height: 40)
-                                .background(Color(.systemBlue))
-                                .clipShape(RoundedRectangle(cornerRadius: 20))
-                        }
+                        Text("\(transaction.currencyFrom ?? "N/A")")
+                            .bold()
+                        Image(systemName: "arrow.left.arrow.right")
+                        Text("\(transaction.currencyTo ?? "N/A")")
+                            .bold()
                     }
-                    List(Array((viewModel.currentUser?.balance.keys)!), id: \.self) { currency in
-                        HStack {
-                            Text("\(currency)")
-                            Text(String(format: "%.2f", viewModel.currentUser?.balance[currency] ?? 0.0))
-                        }
-                    }
-                }.listStyle(.plain)
-                
-                if viewModel.currentUser?.transactionHistory.isEmpty == true {
-                    ContentUnavailableView("No recent transactions", systemImage: "clock.fill")
-                } else {
-                    ForEach(viewModel.currentUser?.transactionHistory ?? [], id: \.date) { transaction in
-                        HStack {
-                            Text("\(transaction.currencyFrom)")
-                            Text("\(transaction.currencyTo)")
-                            Text("\(transaction.amount)")
-                        }
+                    // TODO: Format date
+                    Text("\(transaction.date.displayFormat )")
+                        .foregroundStyle(Color.secondary)
+                }
+                Spacer()
+                VStack(alignment: .center) {
+                    Text("Received")
+                    HStack {
+                        Text(String(format: "%.2f", transaction.amount) + " \(transaction.currencyTo ?? "N/A")")
                     }
                 }
             }
-            .navigationTitle("Wallet")
-            .sheet(isPresented: $showSheet) {
-                TopUpSheetView(amount: $amount)
+        } else if transaction.type == .topUp {
+            HStack {
+                Image(systemName: "arrow.down.to.line.alt")
+                    .modifier(Icon())
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Deposit in")
+                        Text("\(transaction.currencyTo ?? "N/A")")
+                            .bold()
+                    }
+                    Text("\(transaction.date.displayFormat)")
+                        .foregroundStyle(Color.secondary)
+                }
+                Spacer()
+                VStack(alignment: .center) {
+                    Text("Received")
+                    HStack {
+                        Text(String(format: "%.2f", transaction.amount) + " \(transaction.currencyTo ?? "N/A")")
+                    }
+                    .foregroundStyle(Color(.systemGreen))
+                }
             }
         }
+    }
+    
+    fileprivate var addMoneyButton: some View {
+        Button {
+            showSheet.toggle()
+        } label: {
+            Text("Add Money")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color.white)
+                .frame(width: 120, height: 40)
+                .background(Color(.systemBlue))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+        }
+        .buttonStyle(BorderlessButtonStyle())
+    }
+    
+    fileprivate var userTotalBalance: some View {
+        VStack {
+            Text("Total balance")
+                .font(.title3)
+                .foregroundStyle(Color(.secondaryLabel))
+            Text(String(format: "%.2f PLN", viewModel.currentUser?.balance["PLN"] ?? 0.0))
+                .contentTransition(.numericText())
+                .font(.system(size: 44, weight: .bold))
+        }
+    }
+    
+    fileprivate var listOfUserCurrency: some View {
+        ForEach(Array((viewModel.currentUser?.balance.keys)!), id: \.self) { currency in
+            HStack {
+                Text("\(currency)")
+                    .modifier(Icon(font: .caption))
+                VStack(alignment: .leading) {
+                    Text("\(currency)")
+                    Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
+                }
+            }
+        }
+    }
+    
+    private struct Icon: ViewModifier {
+        var font: Font = .title
+        var shape: AnyShape = AnyShape(Circle())
+        
+        func body(content: Content) -> some View {
+            content
+                .font(font)
+                .foregroundStyle(Color(.white))
+                .fontWeight(.semibold)
+                .frame(width: 40, height: 40)
+                .background(Color(.systemGray3))
+                .clipShape(shape)
+                .padding(2)
+        }
+    }
+}
+
+extension Date {
+    var displayFormat: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM d 'at' h:mm"
+        return formatter.string(from: self)
     }
 }
 
