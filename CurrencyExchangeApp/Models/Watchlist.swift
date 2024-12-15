@@ -21,6 +21,14 @@ struct Watchlist: Codable, Identifiable, Hashable {
     static func == (lhs: Watchlist, rhs: Watchlist) -> Bool {
         lhs.id == rhs.id
     }
+    
+    func toDictionary() -> [String: Any] {
+        let dict: [String: Any] = [
+            "name": name,
+            "rates": [],
+        ]
+        return dict
+    }
 }
 
 extension Watchlist {

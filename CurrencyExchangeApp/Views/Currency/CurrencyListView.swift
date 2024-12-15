@@ -8,83 +8,228 @@
 import SwiftUI
 
 struct CurrencyListView: View {
-    @StateObject private var viewModel = CurrencyViewModel()
+    @StateObject private var currencyViewModel = CurrencyViewModel()
     @EnvironmentObject private var userViewModel: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedRate: Rate? = nil
     @State private var selectedWatchlist: Watchlist?
+    @State private var isAlertShown: Bool = false
+    @State private var watchlistText: String = ""
     
     var body: some View {
         NavigationStack {
-            List {
-            //header
-            HStack {
-                //Searchbar
+            if ((selectedWatchlist?.rates.isEmpty) != nil) {
+                watchlistMenu
                 
-            }
-            Menu {
-                Picker("Select Watchlist", selection: $selectedWatchlist) {
-                    if selectedWatchlist?.rates.isEmpty == true {
-                        Text("No Currencies in Watchlist")
-                            .font(.largeTitle)
+                ContentUnavailableView("Watchlist is empty", systemImage: "xmark")
+                    .listStyle(.plain)
+                    .navigationTitle("Currencies")
+                    .searchable(text: $currencyViewModel.searchText, prompt: "Search Currency") {
+                        if !currencyViewModel.searchText.isEmpty {
+                            // function that going to return currencies based on text first letter
+                            searchCurrencyList
+                        }
+                    }
+                    .toolbar(content: {
+                        toolbarMenu
+                    })
+                    .sheet(item: $selectedRate) { rate in
+                        ItemSheetView(rate: rate)
+                            .presentationDetents([.height(250)])
+                    }
+                    .alert("New Watchlist", isPresented: $isAlertShown, actions: {
+                        createWatchlistAlert
+                    }, message: {
+                        Text("Enter a name for this watchlist.")
+                    })
+                    .onAppear {
+                        currencyViewModel.fetchCurrencyRates()
+                        if let defaultWatchlist = userViewModel.currentUser?.watchlists.first {
+                            selectedWatchlist = defaultWatchlist
+                        } else {
+                            selectedWatchlist = Watchlist.defaultWatchlist
+                        }
+                    }
+            } else {
+                List {
+                    watchlistMenu
+                        .listRowSeparator(.hidden)
+                    //MARK: Default Watchlist
+                    currentWatchlist
+                }
+                .listStyle(.plain)
+                .navigationTitle("Currencies")
+                .searchable(text: $currencyViewModel.searchText, prompt: "Search Currency") {
+                    if !currencyViewModel.searchText.isEmpty {
+                        // function that going to return currencies based on text first letter
+                        searchCurrencyList
+                    }
+                }
+                .toolbar(content: {
+                    toolbarMenu
+                })
+                .sheet(item: $selectedRate) { rate in
+                    ItemSheetView(rate: rate)
+                        .presentationDetents([.height(250)])
+                }
+                .alert("New Watchlist", isPresented: $isAlertShown, actions: {
+                    createWatchlistAlert
+                }, message: {
+                    Text("Enter a name for this watchlist.")
+                })
+                .onAppear {
+                    currencyViewModel.fetchCurrencyRates()
+                    if let defaultWatchlist = userViewModel.currentUser?.watchlists.first {
+                        selectedWatchlist = defaultWatchlist
                     } else {
-                        ForEach(userViewModel.currentUser?.watchlists ?? []) { watchlist in
-                            Text(watchlist.name).tag(watchlist as Watchlist?)
-                        }
+                        selectedWatchlist = Watchlist.defaultWatchlist
                     }
                 }
-
-            } label: {
-                Text("My Currencies")
-            }
-
-                ForEach(viewModel.rates, id: \.code) { rate in
-                    Button {
-                        selectedRate = rate
-                        print("Selected Rate: \(String(describing: selectedRate))")
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(rate.code)
-                                    .foregroundStyle(Color.primary)
-                                    .font(.title2)
-                                    .bold()
-                                Text(rate.currency.capitalized)
-                                    .foregroundStyle(Color(.secondaryLabel))
-                                    .font(.caption)
-                            }
-                            Spacer()
-                            VStack {
-                                Text(String(format: "%.4f", rate.mid) + "zł")
-                                    .foregroundStyle(Color.primary)
-                                    .font(.headline)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .listStyle(.plain)
-            .navigationTitle("Currencies")
-            .toolbar(content: {
-                MenuView()
-            })
-            .sheet(item: $selectedRate) { rate in
-                ItemSheetView(rate: rate)
-                    .presentationDetents([.height(250)])
-            }
-            .refreshable {
-                viewModel.fetchCurrencyRates()
-            }
-            .onAppear {
-                viewModel.fetchCurrencyRates()
             }
         }
     }
-}
-
-fileprivate struct MenuView: View {
-    var body: some View {
+    
+    @ViewBuilder
+    fileprivate var searchCurrencyList: some View {
+        if currencyViewModel.filterCurrency.isEmpty {
+            ContentUnavailableView("No results for " + "\"\(currencyViewModel.searchText)\"", systemImage: "xmark")
+                .listRowSeparator(.hidden)
+        } else {
+            watchlistMenu
+                .listRowSeparator(.hidden)
+            ForEach(currencyViewModel.filterCurrency) { rate in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(rate.code)
+                            .foregroundStyle(Color.primary)
+                            .font(.title2)
+                            .bold()
+                        Text(rate.currency.capitalized)
+                            .foregroundStyle(Color(.secondaryLabel))
+                            .font(.caption)
+                    }
+                    Spacer()
+                    VStack {
+                        Text(String(format: "%.4f", rate.mid) + "zł")
+                            .foregroundStyle(Color.primary)
+                            .font(.headline)
+                    }
+                }
+                .swipeActions {
+                    Button {
+                        if let selectedWatchlist = selectedWatchlist {
+                            if selectedWatchlist.rates.contains(where: { $0.id == rate.id }) {
+                                //userViewModel.currentUser?.removeFromWatchlist(rate)
+                                print("remove from watchlist")
+                            } else {
+                                print("add to watchlist")
+                                Task {
+                                    try await userViewModel.addToWatchlist(watchlist: selectedWatchlist, rate: rate)
+                                }
+                            }
+                        }
+                    } label: {
+                        if let selectedWatchlist = selectedWatchlist, selectedWatchlist.rates.contains(where: { $0.id == rate.id }) {
+                            Image(systemName: "checkmark.circle.fill")
+                        } else {
+                            Image(systemName: "plus.circle")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    fileprivate var currentWatchlist: some View {
+        if let selectedWatchlist = selectedWatchlist {
+            ForEach(selectedWatchlist.rates) { rate in
+                Button {
+                    selectedRate = rate
+                    print("Selected Rate: \(String(describing: selectedRate))")
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(rate.code)
+                                .foregroundStyle(Color.primary)
+                                .font(.title2)
+                                .bold()
+                            Text(rate.currency.capitalized)
+                                .foregroundStyle(Color(.secondaryLabel))
+                                .font(.caption)
+                        }
+                        Spacer()
+                        VStack {
+                            Text(String(format: "%.4f", rate.mid) + "zł")
+                                .foregroundStyle(Color.primary)
+                                .font(.headline)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: Menu
+    
+    fileprivate var watchlistMenu: some View {
+        Menu {
+            ForEach(userViewModel.currentUser?.watchlists ?? []) { watchlist in
+                Button {
+                    // selected watchlist = watchlist
+                    selectedWatchlist = watchlist
+                } label: {
+                    Text(watchlist.name)
+                }
+            }
+            Divider()
+            Button {
+                
+            } label: {
+                HStack {
+                    Text("Manage Watchlists")
+                    Image(systemName: "slider.horizontal.3")
+                }
+            }
+            Button {
+                isAlertShown.toggle()
+            } label: {
+                HStack {
+                    Text("New Watchlist")
+                    Image(systemName: "plus")
+                }
+            }
+        } label: {
+            // Current Watchlist
+            
+                HStack {
+                    // Watchlist name
+                    Text(selectedWatchlist?.name ?? "N/A")
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption)
+                }
+                .bold()
+            
+        }
+    }
+    
+    @ViewBuilder
+    fileprivate var createWatchlistAlert: some View {
+        TextField("New Watchlist", text: $watchlistText)
+        Button("Cancel") {
+            dismiss()
+        }
+        Button("Save") {
+            Task {
+                try await userViewModel.createWatchlist(name: watchlistText)
+            }
+            selectedWatchlist = userViewModel.currentUser?.watchlists.last
+            dismiss()
+        }
+        .disabled(watchlistText.isEmpty)
+    }
+    
+    fileprivate var toolbarMenu: some View {
         Menu {
             Button {
                 
@@ -94,6 +239,7 @@ fileprivate struct MenuView: View {
                     Image(systemName: "polishzlotysign")
                 }
             }
+            Divider()
             Menu {
                 // Picker with sorting tags
                 Button {
@@ -121,8 +267,6 @@ fileprivate struct MenuView: View {
             Image(systemName: "ellipsis.circle.fill")
         }
     }
+
 }
 
-#Preview {
-    CurrencyListView()
-}

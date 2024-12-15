@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Rate: Codable, Identifiable {
+struct Rate: Codable, Identifiable, Equatable {
     var id: String {
         code
     }

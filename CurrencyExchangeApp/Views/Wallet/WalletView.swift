@@ -28,13 +28,11 @@ struct WalletView: View {
                         .padding(.vertical)
                         .textCase(nil)
                     }
-                    
                     Section {
                         NavigationLink(destination: transactionHistory) {
                             transactionHistoryLabel
                         }
                     }
-                    
                 }
                 .buttonStyle(BorderlessButtonStyle())
                 .listStyle(InsetGroupedListStyle())
@@ -63,7 +61,7 @@ struct WalletView: View {
     fileprivate var transactionHistoryLabel: some View {
         HStack {
             Image(systemName: "list.star")
-                .modifier(Icon(shape: AnyShape(RoundedRectangle(cornerRadius: 10))))
+                .modifier(IconModifier(shape: AnyShape(RoundedRectangle(cornerRadius: 10))))
             Text("Transaction history")
                 .foregroundStyle(Color(.secondaryLabel))
         }
@@ -74,7 +72,7 @@ struct WalletView: View {
         if transaction.type == .buy || transaction.type == .sell {
             HStack {
                 Image(systemName: "polishzlotysign.arrow.circlepath")
-                    .modifier(Icon())
+                    .modifier(IconModifier())
                 VStack(alignment: .leading) {
                     HStack {
                         Text("\(transaction.currencyFrom ?? "N/A")")
@@ -98,7 +96,7 @@ struct WalletView: View {
         } else if transaction.type == .topUp {
             HStack {
                 Image(systemName: "arrow.down.to.line.alt")
-                    .modifier(Icon())
+                    .modifier(IconModifier())
                 VStack(alignment: .leading) {
                     HStack {
                         Text("Deposit in")
@@ -132,7 +130,6 @@ struct WalletView: View {
                 .background(Color(.systemBlue))
                 .clipShape(RoundedRectangle(cornerRadius: 20))
         }
-        .buttonStyle(BorderlessButtonStyle())
     }
     
     fileprivate var userTotalBalance: some View {
@@ -148,31 +145,33 @@ struct WalletView: View {
     
     fileprivate var listOfUserCurrency: some View {
         ForEach(Array((viewModel.currentUser?.balance.keys)!), id: \.self) { currency in
-            HStack {
-                Text("\(currency)")
-                    .modifier(Icon(font: .caption))
-                VStack(alignment: .leading) {
+            if viewModel.currentUser?.balance[currency] != 0.0 {
+                HStack {
                     Text("\(currency)")
-                    Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
+                        .modifier(IconModifier(font: .caption))
+                    VStack(alignment: .leading) {
+                        Text("\(currency)")
+                        Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
+                    }
                 }
             }
         }
     }
+}
+
+struct IconModifier: ViewModifier {
+    var font: Font = .title
+    var shape: AnyShape = AnyShape(Circle())
     
-    private struct Icon: ViewModifier {
-        var font: Font = .title
-        var shape: AnyShape = AnyShape(Circle())
-        
-        func body(content: Content) -> some View {
-            content
-                .font(font)
-                .foregroundStyle(Color(.white))
-                .fontWeight(.semibold)
-                .frame(width: 40, height: 40)
-                .background(Color(.systemGray3))
-                .clipShape(shape)
-                .padding(2)
-        }
+    func body(content: Content) -> some View {
+        content
+            .font(font)
+            .foregroundStyle(Color(.white))
+            .fontWeight(.semibold)
+            .frame(width: 40, height: 40)
+            .background(Color(.systemGray3))
+            .clipShape(shape)
+            .padding(2)
     }
 }
 

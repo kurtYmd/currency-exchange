@@ -27,6 +27,8 @@ class AuthViewModel: ObservableObject {
         }
     }
     
+    // MARK: User balance functionality
+    
     func topUp(amount: Double) async throws {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let userRef = Firestore.firestore().collection("users").document(uid)
@@ -95,6 +97,8 @@ class AuthViewModel: ObservableObject {
         try await userRef.setData(["transactionHistory": transactionHistoryData], merge: true)
     }
     
+    //MARK: User Auth
+    
     func signIn(withEmail email: String, password: String) async throws {
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
@@ -153,6 +157,68 @@ class AuthViewModel: ObservableObject {
             print("DEBUG: Failed to delete user with error: \(error.localizedDescription)")
         }
     }
+    
+    // MARK: Watchlist
+    
+    func createWatchlist(name: String) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            throw NSError(domain: "AuthError", code: 1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+        
+        // Create Firestore reference
+        let userRef = Firestore.firestore().collection("users").document(uid)
+        
+        // Create the watchlist object
+        let watchlist = Watchlist(name: name)
+        
+        // Update the local user model
+        await MainActor.run {
+            currentUser?.watchlists.append(watchlist)
+        }
+        
+        // Update the user's main document with the new list of watchlists
+        let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
+        try await userRef.setData(["watchlists": watchlistsData], merge: true)
+    }
+
+
+    
+    func addToWatchlist(watchlist: Watchlist, rate: Rate) async throws {
+        
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let userRef = Firestore.firestore().collection("users").document(uid)
+        
+        // Check if the watchlist exists in the user's watchlists
+        guard var currentUser = currentUser else {
+                print("DEBUG: Current user not found")
+                return
+            }
+            
+            // Check if the watchlist exists in the user's watchlists
+            if let index = currentUser.watchlists.firstIndex(of: watchlist) {
+                // Check if the rate is already in the watchlist
+                if !currentUser.watchlists[index].rates.contains(where: { $0.id == rate.id }) {
+                    currentUser.watchlists[index].rates.append(rate)
+                    
+                    // Update Firestore
+                    self.currentUser = currentUser
+                    let watchlistsData = try currentUser.watchlists.map { try Firestore.Encoder().encode($0) }
+                    try await userRef.setData(["watchlists": watchlistsData], merge: true)
+                    
+                    print("DEBUG: Added \(rate.id) to \(watchlist.name) watchlist")
+                } else {
+                    print("DEBUG: Rate \(rate.id) is already in the \(watchlist.name) watchlist")
+                }
+            } else {
+                print("DEBUG: Watchlist \(watchlist.name) not found in user's watchlists")
+            }
+        try await userRef.collection("watchlists").addDocument(data: ["name": rate])
+        
+        try await userRef.setData(["watchlists": currentUser.watchlists], merge: true)
+        
+    }
+    
+    // MARK: Firebase configuration
     
     private func updateFirestoreUser(field: String, value: Any) {
         guard let uid = Auth.auth().currentUser?.uid else { return }

@@ -12,11 +12,24 @@ class CurrencyViewModel: ObservableObject {
     @Published var rates: [Rate] = []
     @Published var errorMessage: String? = nil
     @Published var effectiveDate: String? = nil
+    @Published var searchText: String = ""
     
     private var cancellable: AnyCancellable?
     
     init() {
         fetchCurrencyRates()
+    }
+    
+//    func filterWatchlist(rates: [Rate]) -> [Rate] {
+//        return rates.filter { rates.contains($0) }
+//    }
+    
+    var filterCurrency: [Rate] {
+        guard !searchText.isEmpty else { return rates }
+        
+        return rates.filter { rate in
+            rate.code.lowercased().contains(searchText.lowercased()) || rate.currency.lowercased().contains(searchText.lowercased())
+        }
     }
     
     func fetchCurrencyRates() {
