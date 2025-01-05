@@ -18,72 +18,41 @@ struct CurrencyListView: View {
     
     var body: some View {
         NavigationStack {
-            if ((selectedWatchlist?.rates.isEmpty) != nil) {
+            List {
                 watchlistMenu
-                
-                ContentUnavailableView("Watchlist is empty", systemImage: "xmark")
-                    .listStyle(.plain)
-                    .navigationTitle("Currencies")
-                    .searchable(text: $currencyViewModel.searchText, prompt: "Search Currency") {
-                        if !currencyViewModel.searchText.isEmpty {
-                            // function that going to return currencies based on text first letter
-                            searchCurrencyList
-                        }
-                    }
-                    .toolbar(content: {
-                        toolbarMenu
-                    })
-                    .sheet(item: $selectedRate) { rate in
-                        ItemSheetView(rate: rate)
-                            .presentationDetents([.height(250)])
-                    }
-                    .alert("New Watchlist", isPresented: $isAlertShown, actions: {
-                        createWatchlistAlert
-                    }, message: {
-                        Text("Enter a name for this watchlist.")
-                    })
-                    .onAppear {
-                        currencyViewModel.fetchCurrencyRates()
-                        if let defaultWatchlist = userViewModel.currentUser?.watchlists.first {
-                            selectedWatchlist = defaultWatchlist
-                        } else {
-                            selectedWatchlist = Watchlist.defaultWatchlist
-                        }
-                    }
-            } else {
-                List {
-                    watchlistMenu
-                        .listRowSeparator(.hidden)
-                    //MARK: Default Watchlist
+                    .listRowSeparator(.hidden)
+                //MARK: Default Watchlist
+                if ((selectedWatchlist?.rates.isEmpty) != nil) {
                     currentWatchlist
+                } else {
+                    ContentUnavailableView("No rates added to watchlist", systemImage: "xmark")
                 }
-                .listStyle(.plain)
-                .navigationTitle("Currencies")
-                .searchable(text: $currencyViewModel.searchText, prompt: "Search Currency") {
-                    if !currencyViewModel.searchText.isEmpty {
-                        // function that going to return currencies based on text first letter
-                        searchCurrencyList
-                    }
+            }
+            .listStyle(.plain)
+            .navigationTitle("Currencies")
+            .searchable(text: $currencyViewModel.searchText, prompt: "Search Currency") {
+                if !currencyViewModel.searchText.isEmpty {
+                    searchCurrencyList
                 }
-                .toolbar(content: {
-                    toolbarMenu
-                })
-                .sheet(item: $selectedRate) { rate in
-                    ItemSheetView(rate: rate)
-                        .presentationDetents([.height(250)])
-                }
-                .alert("New Watchlist", isPresented: $isAlertShown, actions: {
-                    createWatchlistAlert
-                }, message: {
-                    Text("Enter a name for this watchlist.")
-                })
-                .onAppear {
-                    currencyViewModel.fetchCurrencyRates()
-                    if let defaultWatchlist = userViewModel.currentUser?.watchlists.first {
-                        selectedWatchlist = defaultWatchlist
-                    } else {
-                        selectedWatchlist = Watchlist.defaultWatchlist
-                    }
+            }
+            .toolbar(content: {
+                toolbarMenu
+            })
+            .sheet(item: $selectedRate) { rate in
+                ItemSheetView(rate: rate)
+                    .presentationDetents([.height(250)])
+            }
+            .alert("New Watchlist", isPresented: $isAlertShown, actions: {
+                createWatchlistAlert
+            }, message: {
+                Text("Enter a name for this watchlist.")
+            })
+            .onAppear {
+                currencyViewModel.fetchCurrencyRates()
+                if let defaultWatchlist = userViewModel.currentUser?.watchlists.first {
+                    selectedWatchlist = defaultWatchlist
+                } else {
+                    selectedWatchlist = Watchlist.defaultWatchlist
                 }
             }
         }
@@ -92,7 +61,10 @@ struct CurrencyListView: View {
     @ViewBuilder
     fileprivate var searchCurrencyList: some View {
         if currencyViewModel.filterCurrency.isEmpty {
+            watchlistMenu
+                .listRowSeparator(.hidden)
             ContentUnavailableView("No results for " + "\"\(currencyViewModel.searchText)\"", systemImage: "xmark")
+                .padding(.top, 100)
                 .listRowSeparator(.hidden)
         } else {
             watchlistMenu
@@ -169,7 +141,7 @@ struct CurrencyListView: View {
             }
         }
     }
-    
+     
     // MARK: Menu
     
     fileprivate var watchlistMenu: some View {

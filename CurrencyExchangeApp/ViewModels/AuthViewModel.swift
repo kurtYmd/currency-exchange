@@ -181,8 +181,6 @@ class AuthViewModel: ObservableObject {
         try await userRef.setData(["watchlists": watchlistsData], merge: true)
     }
 
-
-    
     func addToWatchlist(watchlist: Watchlist, rate: Rate) async throws {
         
         guard let uid = Auth.auth().currentUser?.uid else { return }
@@ -215,7 +213,6 @@ class AuthViewModel: ObservableObject {
         try await userRef.collection("watchlists").addDocument(data: ["name": rate])
         
         try await userRef.setData(["watchlists": currentUser.watchlists], merge: true)
-        
     }
     
     // MARK: Firebase configuration
