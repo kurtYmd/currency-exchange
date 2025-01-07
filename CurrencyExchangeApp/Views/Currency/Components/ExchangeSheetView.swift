@@ -14,6 +14,7 @@ struct ExchangeSheetView: View {
     @State var transactionType: TransactionType
     @State var isPresented = false
     @State var amount: String
+    //TODO: Add animation if can't exchange due to error
     
     var body: some View {
         if viewModel.currentUser != nil {

@@ -16,21 +16,27 @@ struct TopUpSheetView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var topUpTask: Task<Void, Never>?
+    @FocusState var isTextFieldFocused: Bool
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                Text("You deposit to your wallet")
-                    .font(.title2)
+                Spacer()
+//                Text("You deposit to your wallet")
+//                    .font(.title2)
+//                    .foregroundStyle(Color(.secondaryLabel))
+//                    .padding(.top)
+                Image(systemName: "polishzlotysign.bank.building")
                     .foregroundStyle(Color(.secondaryLabel))
-                    .padding(.top)
+                    .font(.system(size: 100))
                 
                 VStack {
                    TextField("0", text: $amount)
                         .keyboardType(.decimalPad)
-                        .textFieldStyle(PlainTextFieldStyle())
+                        .focused($isTextFieldFocused)
+                        //.textFieldStyle(PlainTextFieldStyle())
                         .multilineTextAlignment(.center)
-                        .font(.largeTitle)
+                        .font(.system(size: 50))
                         .bold()
                         .padding(.horizontal)
                 }
@@ -47,7 +53,7 @@ struct TopUpSheetView: View {
                 Spacer()
                 
             }
-            .navigationTitle("Top Up")
+            .navigationTitle("Deposit to Your Wallet")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -70,7 +76,10 @@ struct TopUpSheetView: View {
                 }
             }
         }
-        .presentationDetents([.height(200)])
+        .onAppear() {
+            self.isTextFieldFocused = true
+        }
+//        .presentationDetents([.height(200)])
         .confirmationDialog("Alert", isPresented: $isPresented) {
             Button ("Cancel Top-Up", role: .destructive) {
                 amount = ""

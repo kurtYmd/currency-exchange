@@ -24,7 +24,7 @@ struct MainView: View {
                         ProfileView()
                     }
                 }
-                .tint(Color(.systemBlue))
+                .tint(Color(.systemIndigo))
             } else {
                 LoginView()
             }

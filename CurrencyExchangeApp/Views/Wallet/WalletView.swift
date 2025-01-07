@@ -12,58 +12,65 @@ struct WalletView: View {
     @State private var showSheet = false
     @State private var amount: String = ""
     @Environment(\.dismiss) private var dismiss
+    @State private var showAllTransactions = false
     
     var body: some View {
         if viewModel.currentUser != nil {
             NavigationStack {
                 List {
                     Section {
-                        listOfUserCurrency
-                    } header: {
-                        VStack(spacing: 8) {
-                            userTotalBalance
-                            addMoneyButton
-                        }
-                        .background(Color.clear)
-                        .padding(.vertical)
-                        .textCase(nil)
+                        userTotalBalance
                     }
                     Section {
-                        NavigationLink(destination: transactionHistory) {
-                            transactionHistoryLabel
-                        }
+                        listOfUserCurrency
+                    } header : {
+                        Text("Available Currencies")
                     }
+                    .headerProminence(.increased)
+                    Section {
+//                        NavigationLink(destination: transactionHistory) {
+                        transactionHistory
+//                        }
+                    } header : {
+                        Text("Recent Transactions")
+                    }
+                    .headerProminence(.increased)
                 }
-                .buttonStyle(BorderlessButtonStyle())
-                .listStyle(InsetGroupedListStyle())
                 .navigationTitle("Wallet")
                 .sheet(isPresented: $showSheet) {
                     TopUpSheetView(amount: $amount)
                 }
+                .toolbar(content: {
+                    toolbar
+                })
             }
         }
     }
     
     @ViewBuilder
     fileprivate var transactionHistory: some View {
-        if viewModel.currentUser?.transactionHistory.isEmpty == true {
-            ContentUnavailableView("No recent transactions", systemImage: "clock.fill")
-        } else {
-            ScrollView {
-                ForEach(viewModel.currentUser?.transactionHistory ?? [], id: \.date) { transaction in
-                    transactionRow(transaction: transaction)
-                        .padding(.horizontal)
+        if let transactions = viewModel.currentUser?.transactionHistory, !transactions.isEmpty {
+            ForEach(showAllTransactions ? transactions : Array(transactions.prefix(5)), id: \.date) { transaction in
+                transactionRow(transaction: transaction)
+            }
+            if let transactionCount = viewModel.currentUser?.transactionHistory.count, transactionCount > 5 {
+                Button {
+                    showAllTransactions.toggle()
+                } label: {
+                    HStack {
+                        Image(systemName: showAllTransactions ? "eye.slash" : "eye")
+                            .contentTransition(.symbolEffect(.replace))
+                            .iconStyle(font: .title2)
+                        Text(showAllTransactions ? "Show Less" : "Show More")
+                            .foregroundStyle(Color(.black))
+                            .bold()
+                    }
                 }
             }
-        }
-    }
-    
-    fileprivate var transactionHistoryLabel: some View {
-        HStack {
-            Image(systemName: "list.star")
-                .modifier(IconModifier(shape: AnyShape(RoundedRectangle(cornerRadius: 10))))
-            Text("Transaction history")
-                .foregroundStyle(Color(.secondaryLabel))
+        } else {
+            Text("No recent transactions")
+                .foregroundColor(.secondary)
+                .font(.body.italic())
         }
     }
     
@@ -96,7 +103,7 @@ struct WalletView: View {
         } else if transaction.type == .topUp {
             HStack {
                 Image(systemName: "arrow.down.to.line.alt")
-                    .modifier(IconModifier())
+                    .iconStyle()
                 VStack(alignment: .leading) {
                     HStack {
                         Text("Deposit in")
@@ -118,28 +125,29 @@ struct WalletView: View {
         }
     }
     
-    fileprivate var addMoneyButton: some View {
-        Button {
-            showSheet.toggle()
+    //TODO: Hide all recent transaction
+    fileprivate var toolbar: some View {
+        Menu {
+            Button {
+                showSheet.toggle()
+            } label : {
+                Text("Add Money")
+                Image(systemName: "polishzlotysign.circle")
+            }
         } label: {
-            Text("Add Money")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundStyle(Color.white)
-                .frame(width: 120, height: 40)
-                .background(Color(.systemBlue))
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+            Image(systemName: "ellipsis.circle")
         }
     }
     
+    //TODO: Show Total Balance (not only in PLN)
     fileprivate var userTotalBalance: some View {
-        VStack {
-            Text("Total balance")
-                .font(.title3)
+        VStack(alignment: .leading) {
+            Text("Balance")
+                //.font(.title3)
                 .foregroundStyle(Color(.secondaryLabel))
             Text(String(format: "%.2f PLN", viewModel.currentUser?.balance["PLN"] ?? 0.0))
-                .contentTransition(.numericText())
-                .font(.system(size: 44, weight: .bold))
+                //.contentTransition(.numericText())
+                .font(.system(size: 20, weight: .bold))
         }
     }
     
@@ -148,7 +156,7 @@ struct WalletView: View {
             if viewModel.currentUser?.balance[currency] != 0.0 {
                 HStack {
                     Text("\(currency)")
-                        .modifier(IconModifier(font: .caption))
+                        .iconStyle(font: .caption)
                     VStack(alignment: .leading) {
                         Text("\(currency)")
                         Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
@@ -159,8 +167,9 @@ struct WalletView: View {
     }
 }
 
+//TODO: Make extension 
 struct IconModifier: ViewModifier {
-    var font: Font = .title
+    var font: Font? = .title
     var shape: AnyShape = AnyShape(Circle())
     
     func body(content: Content) -> some View {
@@ -172,6 +181,12 @@ struct IconModifier: ViewModifier {
             .background(Color(.systemGray3))
             .clipShape(shape)
             .padding(2)
+    }
+}
+
+extension View {
+    func iconStyle(font: Font? = .title, shape: AnyShape = AnyShape(Circle())) -> some View {
+        modifier(IconModifier(font: font, shape: shape))
     }
 }
 

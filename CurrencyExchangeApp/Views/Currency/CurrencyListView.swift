@@ -236,9 +236,8 @@ struct CurrencyListView: View {
                 }
             }
         } label: {
-            Image(systemName: "ellipsis.circle.fill")
+            Image(systemName: "ellipsis.circle")
         }
     }
-
 }
 
