@@ -27,35 +27,42 @@ class AuthViewModel: ObservableObject {
         }
     }
     
+    private let userRef = Firestore.firestore().collection("users")
+    
+    private func userDocument(userId: String) -> DocumentReference {
+        userRef.document(userId)
+    }
+    
+    func getCurrentUserUID() -> String? {
+        return Auth.auth().currentUser?.uid
+    }
+    
     // MARK: User balance functionality
     
     func topUp(amount: Double) async throws {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let userRef = Firestore.firestore().collection("users").document(uid)
+        guard let uid = getCurrentUserUID() else { return }
         
         currentUser?.balance["PLN"] = (currentUser?.balance["PLN"] ?? 0.0) + amount
         
         // Save the updated balance to Firestore
-        try await userRef.setData(["balance": currentUser?.balance ?? [:]], merge: true)
-        print("Balance in PLN updated successfully!")
+        try await updateFirestoreUser(field: "balance", value: currentUser?.balance ?? [:])
         
         let transaction = Transaction(currencyFrom: nil, currencyTo: "PLN", amount: amount, type: .topUp, date: Date())
         let transactionData = transaction.toDictionary()
         
         // Add transaction to Firebase
-        try await userRef.collection("transactionHistory").addDocument(data: transactionData)
+        try await userDocument(userId: uid).collection("transactionHistory").addDocument(data: transactionData)
         currentUser?.transactionHistory.append(transaction)
         
         // Convert transactionHistory to an array of dictionaries before saving it to Firestore
         let transactionHistoryData = currentUser?.transactionHistory.map { $0.toDictionary() } ?? []
        
         // Save the updated transaction history to Firestore
-        try await userRef.setData(["transactionHistory": transactionHistoryData], merge: true)
+        try await updateFirestoreUser(field: "transactionHistory", value: transactionHistoryData)
     }
     
     func buyCurrency(amount: Double, currencyCode: String, rate: Double) async throws {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let userRef = Firestore.firestore().collection("users").document(uid)
+        guard let uid = getCurrentUserUID() else { return }
         
         guard currentUser?.balance["PLN"] ?? 0 >= amount else { return }
         
@@ -63,21 +70,20 @@ class AuthViewModel: ObservableObject {
         currentUser?.balance["PLN"]! -= convertedValue
         currentUser?.balance[currencyCode, default: 0] += amount
         
-        try await userRef.setData(["balance": currentUser?.balance ?? [:]], merge: true)
+        try await userDocument(userId: uid).setData(["balance": currentUser?.balance ?? [:]], merge: true)
         
         let transaction = Transaction(currencyFrom: "PLN", currencyTo: currencyCode, amount: amount, type: .buy, date: Date())
         let transactionData = transaction.toDictionary()
         
-        try await userRef.collection("transactionHistory").addDocument(data: transactionData)
+        try await userDocument(userId: uid).collection("transactionHistory").addDocument(data: transactionData)
         currentUser?.transactionHistory.append(transaction)
         
         let transactionHistoryData = currentUser?.transactionHistory.map { $0.toDictionary() } ?? []
-        try await userRef.setData(["transactionHistory": transactionHistoryData], merge: true)
+        try await updateFirestoreUser(field: "transactionHistory", value: transactionHistoryData)
     }
     
     func sellCurrency(amount: Double, currencyCode: String, rate: Double) async throws {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let userRef = Firestore.firestore().collection("users").document(uid)
+        guard let uid = getCurrentUserUID() else { return }
         
         guard currentUser?.balance[currencyCode] ?? 0 >= amount else { return }
         
@@ -85,16 +91,16 @@ class AuthViewModel: ObservableObject {
         currentUser?.balance[currencyCode]! -= amount
         currentUser?.balance["PLN"]! += convertedAmount
         
-        try await userRef.setData(["balance": currentUser?.balance ?? [:]], merge: true)
+        try await userDocument(userId: uid).setData(["balance": currentUser?.balance ?? [:]], merge: true)
         
         let transaction = Transaction(currencyFrom: currencyCode, currencyTo: "PLN", amount: amount, type: .sell, date: Date())
         let transactionData = transaction.toDictionary()
         
-        try await userRef.collection("transactionHistory").addDocument(data: transactionData)
+        try await userDocument(userId: uid).collection("transactionHistory").addDocument(data: transactionData)
         currentUser?.transactionHistory.append(transaction)
         
         let transactionHistoryData = currentUser?.transactionHistory.map { $0.toDictionary() } ?? []
-        try await userRef.setData(["transactionHistory": transactionHistoryData], merge: true)
+        try await updateFirestoreUser(field: "transactionHistory", value: transactionHistoryData)
     }
     
     //MARK: User Auth
@@ -141,7 +147,7 @@ class AuthViewModel: ObservableObject {
         
         let userId = user.uid
         do {
-            try await Firestore.firestore().collection("users").document(userId).delete()
+            try await userDocument(userId: userId).delete()
         } catch {
             print("DEBUG: Failed to delete user document with error: \(error.localizedDescription)")
         }
@@ -160,79 +166,62 @@ class AuthViewModel: ObservableObject {
     
     // MARK: Watchlist
     
-    func createWatchlist(name: String) async throws {
-        guard let uid = Auth.auth().currentUser?.uid else {
-            throw NSError(domain: "AuthError", code: 1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
-        }
-        
-        // Create Firestore reference
-        let userRef = Firestore.firestore().collection("users").document(uid)
-        
-        // Create the watchlist object
+    func createWatchlist(name: String) async throws -> Watchlist {
+//        guard let uid = getCurrentUserUID() else {
+//            throw NSError(domain: "AuthError", code: 1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+//        }
+
         let watchlist = Watchlist(name: name)
         
-        // Update the local user model
-        await MainActor.run {
-            currentUser?.watchlists.append(watchlist)
-        }
+        currentUser?.watchlists.append(watchlist)
         
-        // Update the user's main document with the new list of watchlists
         let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
-        try await userRef.setData(["watchlists": watchlistsData], merge: true)
+        try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
+        
+        return watchlist
     }
 
+    func removeFromWatchlist(watchlist: Watchlist, rate: Rate) async throws {
+        if let watchlistIndex = currentUser?.watchlists.firstIndex(where: { $0.name == watchlist.name }) {
+            if let rateIndex = currentUser?.watchlists[watchlistIndex].rates.firstIndex(of: rate) {
+                currentUser?.watchlists[watchlistIndex].rates.remove(at: rateIndex)
+            }
+        }
+        
+        self.currentUser = self.currentUser
+        
+        let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
+        
+        try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
+    }
+    
     func addToWatchlist(watchlist: Watchlist, rate: Rate) async throws {
-        
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let userRef = Firestore.firestore().collection("users").document(uid)
-        
-        // Check if the watchlist exists in the user's watchlists
-        guard var currentUser = currentUser else {
-                print("DEBUG: Current user not found")
-                return
-            }
+        if let index = currentUser?.watchlists.firstIndex(where: { $0.name == watchlist.name }) {
+            currentUser?.watchlists[index].rates.append(rate)
             
-            // Check if the watchlist exists in the user's watchlists
-            if let index = currentUser.watchlists.firstIndex(of: watchlist) {
-                // Check if the rate is already in the watchlist
-                if !currentUser.watchlists[index].rates.contains(where: { $0.id == rate.id }) {
-                    currentUser.watchlists[index].rates.append(rate)
-                    
-                    // Update Firestore
-                    self.currentUser = currentUser
-                    let watchlistsData = try currentUser.watchlists.map { try Firestore.Encoder().encode($0) }
-                    try await userRef.setData(["watchlists": watchlistsData], merge: true)
-                    
-                    print("DEBUG: Added \(rate.id) to \(watchlist.name) watchlist")
-                } else {
-                    print("DEBUG: Rate \(rate.id) is already in the \(watchlist.name) watchlist")
-                }
-            } else {
-                print("DEBUG: Watchlist \(watchlist.name) not found in user's watchlists")
-            }
-        try await userRef.collection("watchlists").addDocument(data: ["name": rate])
-        
-        try await userRef.setData(["watchlists": currentUser.watchlists], merge: true)
+            let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
+            
+            try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
+        }
     }
     
     // MARK: Firebase configuration
     
-    private func updateFirestoreUser(field: String, value: Any) {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let userRef = Firestore.firestore().collection("users").document(uid)
+    private func updateFirestoreUser(field: String, value: Any) async throws {
+        guard let uid = getCurrentUserUID() else { return }
         
-        userRef.setData([field: value], merge: true) { error in
-                if let error = error {
-                    print("Failed to update \(field) with error: \(error.localizedDescription)")
-                } else {
-                    print("\(field) updated successfully!")
-                }
-            }
+        do {
+            try await userDocument(userId: uid).setData([field: value], merge: true)
+            print("\(field) updated successfully!")
+        } catch {
+            print("Failed to update \(field) with error: \(error.localizedDescription)")
+            throw error
+        }
     }
     
     func fetchUser() async {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        guard let snapshot = try? await Firestore.firestore().collection("users").document(uid).getDocument() else { return }
+        guard let uid = getCurrentUserUID() else { return }
+        guard let snapshot = try? await userDocument(userId: uid).getDocument() else { return }
         self.currentUser = try? snapshot.data(as: User.self)
         
         print("DEBUG: Current user is \(String(describing: self.currentUser))")

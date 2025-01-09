@@ -17,42 +17,44 @@ struct CurrencyListView: View {
     @State private var watchlistText: String = ""
     
     var body: some View {
-        NavigationStack {
-            List {
-                watchlistMenu
-                    .listRowSeparator(.hidden)
-                //MARK: Default Watchlist
-                if ((selectedWatchlist?.rates.isEmpty) != nil) {
-                    currentWatchlist
-                } else {
-                    ContentUnavailableView("No rates added to watchlist", systemImage: "xmark")
+        if userViewModel.currentUser != nil {
+            NavigationStack {
+                List {
+                    watchlistMenu
+                        .listRowSeparator(.hidden)
+                    //MARK: Default Watchlist
+                    if ((selectedWatchlist?.rates.isEmpty) != nil) {
+                        currentWatchlist
+                    } else {
+                        ContentUnavailableView("No rates added to watchlist", systemImage: "xmark")
+                    }
                 }
-            }
-            .listStyle(.plain)
-            .navigationTitle("Currencies")
-            .searchable(text: $currencyViewModel.searchText, prompt: "Search Currency") {
-                if !currencyViewModel.searchText.isEmpty {
-                    searchCurrencyList
+                .listStyle(.plain)
+                .navigationTitle("Currencies")
+                .searchable(text: $currencyViewModel.searchText, prompt: "Search Currency") {
+                    if !currencyViewModel.searchText.isEmpty {
+                        searchCurrencyList
+                    }
                 }
-            }
-            .toolbar(content: {
-                toolbarMenu
-            })
-            .sheet(item: $selectedRate) { rate in
-                ItemSheetView(rate: rate)
-                    .presentationDetents([.height(250)])
-            }
-            .alert("New Watchlist", isPresented: $isAlertShown, actions: {
-                createWatchlistAlert
-            }, message: {
-                Text("Enter a name for this watchlist.")
-            })
-            .onAppear {
-                currencyViewModel.fetchCurrencyRates()
-                if let defaultWatchlist = userViewModel.currentUser?.watchlists.first {
-                    selectedWatchlist = defaultWatchlist
-                } else {
-                    selectedWatchlist = Watchlist.defaultWatchlist
+                .toolbar(content: {
+                    toolbarMenu
+                })
+                .sheet(item: $selectedRate) { rate in
+                    ItemSheetView(rate: rate)
+                        .presentationDetents([.height(250)])
+                }
+                .alert("New Watchlist", isPresented: $isAlertShown, actions: {
+                    createWatchlistAlert
+                }, message: {
+                    Text("Enter a name for this watchlist.")
+                })
+                .onAppear {
+                    currencyViewModel.fetchCurrencyRates()
+                    if selectedWatchlist == nil {
+                        selectedWatchlist = userViewModel.currentUser?.watchlists[0]
+                    } else {
+                        selectedWatchlist = selectedWatchlist
+                    }
                 }
             }
         }
@@ -71,6 +73,29 @@ struct CurrencyListView: View {
                 .listRowSeparator(.hidden)
             ForEach(currencyViewModel.filterCurrency) { rate in
                 HStack {
+                    if let currentWatchlist = selectedWatchlist {
+                        if currentWatchlist.rates.contains(where: { $0.id == rate.id }) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .onTapGesture {
+                                    // Remove from watchlist
+                                }
+                        } else {
+                            Image(systemName: "plus.circle")
+                                .onTapGesture {
+                                    Task {
+                                        do {
+                                            print("\(rate) is added to Firestore")
+                                            try await userViewModel.addToWatchlist(watchlist: currentWatchlist, rate: rate)
+                                            selectedWatchlist = currentWatchlist
+                                            print("Selected watchlist:\(String(describing: selectedWatchlist))")
+                                            print("Watchlist to replace with: \(currentWatchlist)")
+                                        } catch {
+                                            print("Failed to add rate to watchlist: \(error)")
+                                        }
+                                    }
+                                }
+                        }
+                    }
                     VStack(alignment: .leading) {
                         Text(rate.code)
                             .foregroundStyle(Color.primary)
@@ -87,27 +112,6 @@ struct CurrencyListView: View {
                             .font(.headline)
                     }
                 }
-                .swipeActions {
-                    Button {
-                        if let selectedWatchlist = selectedWatchlist {
-                            if selectedWatchlist.rates.contains(where: { $0.id == rate.id }) {
-                                //userViewModel.currentUser?.removeFromWatchlist(rate)
-                                print("remove from watchlist")
-                            } else {
-                                print("add to watchlist")
-                                Task {
-                                    try await userViewModel.addToWatchlist(watchlist: selectedWatchlist, rate: rate)
-                                }
-                            }
-                        }
-                    } label: {
-                        if let selectedWatchlist = selectedWatchlist, selectedWatchlist.rates.contains(where: { $0.id == rate.id }) {
-                            Image(systemName: "checkmark.circle.fill")
-                        } else {
-                            Image(systemName: "plus.circle")
-                        }
-                    }
-                }
             }
         }
     }
@@ -116,27 +120,37 @@ struct CurrencyListView: View {
     fileprivate var currentWatchlist: some View {
         if let selectedWatchlist = selectedWatchlist {
             ForEach(selectedWatchlist.rates) { rate in
-                Button {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(rate.code)
+                            .foregroundStyle(Color.primary)
+                            .font(.title2)
+                            .bold()
+                        Text(rate.currency.capitalized)
+                            .foregroundStyle(Color(.secondaryLabel))
+                            .font(.caption)
+                    }
+                    Spacer()
+                    VStack {
+                        Text(String(format: "%.4f", rate.mid) + "zł")
+                            .foregroundStyle(Color.primary)
+                            .font(.headline)
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
                     selectedRate = rate
                     print("Selected Rate: \(String(describing: selectedRate))")
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(rate.code)
-                                .foregroundStyle(Color.primary)
-                                .font(.title2)
-                                .bold()
-                            Text(rate.currency.capitalized)
-                                .foregroundStyle(Color(.secondaryLabel))
-                                .font(.caption)
+                }
+                .swipeActions {
+                    Button {
+                        Task {
+                            try await userViewModel.removeFromWatchlist(watchlist: selectedWatchlist, rate: rate)
                         }
-                        Spacer()
-                        VStack {
-                            Text(String(format: "%.4f", rate.mid) + "zł")
-                                .foregroundStyle(Color.primary)
-                                .font(.headline)
-                        }
+                    } label : {
+                        Image(systemName: "trash")
                     }
+                    .tint(.red)
                 }
             }
         }
@@ -148,7 +162,6 @@ struct CurrencyListView: View {
         Menu {
             ForEach(userViewModel.currentUser?.watchlists ?? []) { watchlist in
                 Button {
-                    // selected watchlist = watchlist
                     selectedWatchlist = watchlist
                 } label: {
                     Text(watchlist.name)
@@ -193,10 +206,10 @@ struct CurrencyListView: View {
         }
         Button("Save") {
             Task {
-                try await userViewModel.createWatchlist(name: watchlistText)
+               let newWatchlist = try await userViewModel.createWatchlist(name: watchlistText)
+                selectedWatchlist = newWatchlist
+                dismiss()
             }
-            selectedWatchlist = userViewModel.currentUser?.watchlists.last
-            dismiss()
         }
         .disabled(watchlistText.isEmpty)
     }

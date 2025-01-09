@@ -15,29 +15,21 @@ struct TopUpSheetView: View {
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
-    @State private var topUpTask: Task<Void, Never>?
     @FocusState var isTextFieldFocused: Bool
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                Spacer()
-//                Text("You deposit to your wallet")
-//                    .font(.title2)
-//                    .foregroundStyle(Color(.secondaryLabel))
-//                    .padding(.top)
-                Image(systemName: "polishzlotysign.bank.building")
-                    .foregroundStyle(Color(.secondaryLabel))
-                    .font(.system(size: 100))
-                
+            VStack(spacing: 50) {
+                Text("Deposit to Your Wallet")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding()
                 VStack {
                    TextField("0", text: $amount)
                         .keyboardType(.decimalPad)
                         .focused($isTextFieldFocused)
-                        //.textFieldStyle(PlainTextFieldStyle())
                         .multilineTextAlignment(.center)
-                        .font(.system(size: 50))
-                        .bold()
+                        .font(.system(size: 75))
                         .padding(.horizontal)
                 }
                 if Int(amount) ?? 0 < 5 {
@@ -53,7 +45,6 @@ struct TopUpSheetView: View {
                 Spacer()
                 
             }
-            .navigationTitle("Deposit to Your Wallet")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

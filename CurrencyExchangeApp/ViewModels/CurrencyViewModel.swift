@@ -20,11 +20,7 @@ class CurrencyViewModel: ObservableObject {
         fetchCurrencyRates()
     }
     
-//    func filterWatchlist(rates: [Rate]) -> [Rate] {
-//        return rates.filter { rates.contains($0) }
-//    }
-    
-    var filterCurrency: [Rate] {
+   var filterCurrency: [Rate] {
         guard !searchText.isEmpty else { return rates }
         
         return rates.filter { rate in

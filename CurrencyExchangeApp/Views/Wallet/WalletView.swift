@@ -28,9 +28,8 @@ struct WalletView: View {
                     }
                     .headerProminence(.increased)
                     Section {
-//                        NavigationLink(destination: transactionHistory) {
                         transactionHistory
-//                        }
+                            .transition(.slide)
                     } header : {
                         Text("Recent Transactions")
                     }
@@ -50,7 +49,7 @@ struct WalletView: View {
     @ViewBuilder
     fileprivate var transactionHistory: some View {
         if let transactions = viewModel.currentUser?.transactionHistory, !transactions.isEmpty {
-            ForEach(showAllTransactions ? transactions : Array(transactions.prefix(5)), id: \.date) { transaction in
+            ForEach(showAllTransactions ? transactions : Array(transactions.prefix(2)), id: \.date) { transaction in
                 transactionRow(transaction: transaction)
             }
             if let transactionCount = viewModel.currentUser?.transactionHistory.count, transactionCount > 5 {
@@ -60,7 +59,7 @@ struct WalletView: View {
                     HStack {
                         Image(systemName: showAllTransactions ? "eye.slash" : "eye")
                             .contentTransition(.symbolEffect(.replace))
-                            .iconStyle(font: .title2)
+                            .iconStyle(.title2)
                         Text(showAllTransactions ? "Show Less" : "Show More")
                             .foregroundStyle(Color(.black))
                             .bold()
@@ -68,9 +67,7 @@ struct WalletView: View {
                 }
             }
         } else {
-            Text("No recent transactions")
-                .foregroundColor(.secondary)
-                .font(.body.italic())
+            ContentUnavailableView("No recent transactions", systemImage: "clock")
         }
     }
     
@@ -89,7 +86,7 @@ struct WalletView: View {
                             .bold()
                     }
                     // TODO: Format date
-                    Text("\(transaction.date.displayFormat )")
+                    Text("\(transaction.date.displayFormat)")
                         .foregroundStyle(Color.secondary)
                 }
                 Spacer()
@@ -151,17 +148,20 @@ struct WalletView: View {
         }
     }
     
+    @ViewBuilder
     fileprivate var listOfUserCurrency: some View {
         ForEach(Array((viewModel.currentUser?.balance.keys)!), id: \.self) { currency in
             if viewModel.currentUser?.balance[currency] != 0.0 {
                 HStack {
                     Text("\(currency)")
-                        .iconStyle(font: .caption)
+                        .iconStyle(.caption)
                     VStack(alignment: .leading) {
                         Text("\(currency)")
                         Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
                     }
                 }
+            } else {
+                ContentUnavailableView("Your currency list is empty", systemImage: "dollarsign")
             }
         }
     }
@@ -169,7 +169,7 @@ struct WalletView: View {
 
 //TODO: Make extension 
 struct IconModifier: ViewModifier {
-    var font: Font? = .title
+    var font: Font = .title
     var shape: AnyShape = AnyShape(Circle())
     
     func body(content: Content) -> some View {
@@ -185,7 +185,7 @@ struct IconModifier: ViewModifier {
 }
 
 extension View {
-    func iconStyle(font: Font? = .title, shape: AnyShape = AnyShape(Circle())) -> some View {
+    func iconStyle(_ font: Font = .title, _ shape: AnyShape = AnyShape(Circle())) -> some View {
         modifier(IconModifier(font: font, shape: shape))
     }
 }

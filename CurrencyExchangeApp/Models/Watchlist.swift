@@ -17,18 +17,20 @@ struct Watchlist: Codable, Identifiable, Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
-
-    static func == (lhs: Watchlist, rhs: Watchlist) -> Bool {
-        lhs.id == rhs.id
-    }
     
     func toDictionary() -> [String: Any] {
-        let dict: [String: Any] = [
-            "name": name,
-            "rates": [],
-        ]
-        return dict
-    }
+           let ratesDict = rates.map { rate in
+               [
+                   "currency": rate.currency,
+                   "code": rate.code,
+                   "mid": rate.mid
+               ]
+           }
+           return [
+               "name": name,
+               "rates": ratesDict
+           ]
+       }
 }
 
 extension Watchlist {
