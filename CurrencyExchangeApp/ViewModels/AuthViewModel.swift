@@ -112,8 +112,26 @@ class AuthViewModel: ObservableObject {
                 self.userSession = result.user
             }
             await fetchUser()
-        } catch {
-            print("Failed to log in with error \(error.localizedDescription)")
+        } catch let error as NSError {
+            print("Error code: \(error.code)")
+            if let authError = AuthErrorCode(rawValue: error.code) {
+                switch authError {
+                case .invalidEmail:
+                    throw AuthError.invalidEmail
+                case .wrongPassword:
+                    throw AuthError.wrongPassword
+                case .userDisabled:
+                    throw AuthError.userDisabled
+                case .operationNotAllowed:
+                    throw AuthError.operationNotAllowed
+                case .userNotFound:
+                    throw AuthError.userNotFound
+                default:
+                    throw AuthError.unknownError
+                }
+            } else {
+                throw AuthError.unknownError
+            }
         }
     }
     
@@ -127,8 +145,18 @@ class AuthViewModel: ObservableObject {
             let encodedUser = try Firestore.Encoder().encode(user)
             try await Firestore.firestore().collection("users").document(user.id).setData(encodedUser)
             await fetchUser()
-        } catch {
-            print("DEBUG: Failed to create a user with error \(error.localizedDescription)")
+        } catch let error as NSError {
+            print(error.code)
+            if let authError = AuthErrorCode(rawValue: error.code) {
+                switch authError {
+                case .emailAlreadyInUse:
+                    throw AuthError.emailAlreadyInUse
+                default:
+                    throw AuthError.unknownError
+                }
+            } else {
+                throw AuthError.unknownError
+            }
         }
     }
     
@@ -137,21 +165,14 @@ class AuthViewModel: ObservableObject {
             try Auth.auth().signOut()
             self.userSession = nil
             self.currentUser = nil
-        } catch {
-            print("Failed to sign out with error \(error.localizedDescription)")
+        } catch let error as NSError {
+            print(error.code)
         }
     }
     
     func deleteUser() async throws {
         guard let user = Auth.auth().currentUser else { return }
-        
-        let userId = user.uid
-        do {
-            try await userDocument(userId: userId).delete()
-        } catch {
-            print("DEBUG: Failed to delete user document with error: \(error.localizedDescription)")
-        }
-        
+
         do {
             try await user.delete()
             await MainActor.run {
@@ -159,8 +180,18 @@ class AuthViewModel: ObservableObject {
                 self.currentUser = nil
             }
             await fetchUser()
-        } catch {
-            print("DEBUG: Failed to delete user with error: \(error.localizedDescription)")
+        } catch let error as NSError {
+            print("Deletion Error Code: \(error.code)")
+            if let authError = AuthErrorCode(rawValue: error.code) {
+                switch authError {
+                case .requiresRecentLogin:
+                    throw AuthError.requiresRecentLogin
+                default:
+                    throw AuthError.unknownError
+                }
+            } else {
+                throw AuthError.unknownError
+            }
         }
     }
     
@@ -188,8 +219,6 @@ class AuthViewModel: ObservableObject {
             }
         }
         
-        self.currentUser = self.currentUser
-        
         let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
         
         try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
@@ -197,7 +226,9 @@ class AuthViewModel: ObservableObject {
     
     func addToWatchlist(watchlist: Watchlist, rate: Rate) async throws {
         if let index = currentUser?.watchlists.firstIndex(where: { $0.name == watchlist.name }) {
-            currentUser?.watchlists[index].rates.append(rate)
+            self.currentUser?.watchlists[index].rates.append(rate)
+            
+            currentUser = currentUser
             
             let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
             

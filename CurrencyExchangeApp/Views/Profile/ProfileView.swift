@@ -9,9 +9,12 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var viewModel: AuthViewModel
+    @Environment(\.dismiss) var dismiss
     @State private var isPresented: Bool = false
     @State private var signOutIsPressed: Bool = false
     @State private var deleteAccountIsPresented: Bool = false
+    @State private var errorMessage: String? = nil
+    @State private var showErrorAlert: Bool = false
     
     var body: some View {
         if let user = viewModel.currentUser {
@@ -36,9 +39,6 @@ struct ProfileView: View {
                         }
                     }
                 }
-                
-                Spacer()
-                
                 Section {
                     Button {
                         signOutIsPressed = true
@@ -57,6 +57,15 @@ struct ProfileView: View {
                     .foregroundStyle(Color(.systemRed))
                 }
             }
+            .alert("Delete Account", isPresented: $showErrorAlert, actions: {
+                Button("Sign Out", role: .destructive) {
+                    viewModel.signOut()
+                }
+            }, message: {
+                if let subtitle = errorMessage {
+                    Text(subtitle)
+                }
+            })
             .confirmationDialog("Profile Action", isPresented: $isPresented) {
                 if signOutIsPressed {
                     Button("Sign Out", role: .destructive) {
@@ -68,11 +77,13 @@ struct ProfileView: View {
                 } else {
                     Button("Delete Account", role: .destructive) {
                         Task {
-                            try await viewModel.deleteUser()
+                            do {
+                                try await viewModel.deleteUser()
+                            } catch let authError as AuthError {
+                                showErrorAlert = true
+                                errorMessage = authError.localizedDescription
+                            }
                         }
-                    }
-                    Button("Cancel", role: .cancel) {
-                        deleteAccountIsPresented = false
                     }
                 }
             } message: {
