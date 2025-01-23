@@ -13,7 +13,7 @@ struct Rate: Codable, Identifiable, Equatable {
     }
     let currency: String
     let code: String
-    let mid: Double
+    let mid: Double?
 }
 
 struct CurrencyRates: Codable {

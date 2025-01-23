@@ -23,7 +23,6 @@ struct Watchlist: Codable, Identifiable, Hashable {
                [
                    "currency": rate.currency,
                    "code": rate.code,
-                   "mid": rate.mid
                ]
            }
            return [

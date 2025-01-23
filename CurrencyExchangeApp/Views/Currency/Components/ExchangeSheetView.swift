@@ -62,14 +62,14 @@ struct ExchangeSheetView: View {
                     if transactionType == .buy {
                         Button("Buy \(amount) \(rate.code)", role: .destructive) {
                             Task {
-                                try await viewModel.buyCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid)
+                                try await viewModel.buyCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid ?? 0.0)
                             }
                             isPresented = false
                         }
                     } else {
                         Button("Sell \(amount) \(rate.code)", role: .destructive) {
                             Task {
-                                try await viewModel.sellCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid)
+                                try await viewModel.sellCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid ?? 0.0)
                             }
                             isPresented = false
                         }

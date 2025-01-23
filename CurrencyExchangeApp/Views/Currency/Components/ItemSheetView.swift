@@ -41,7 +41,7 @@ struct ItemSheetView: View {
             Divider()
             
             VStack(alignment: .leading) {
-                Text(String(format: "%.2f", rate.mid))
+                Text(String(format: "%.2f", rate.mid ?? "N/A"))
                     .fontWeight(.semibold)
                 Text("\(rate.currency.capitalized) • \(rate.code)")
                     .foregroundStyle(Color(.secondaryLabel))

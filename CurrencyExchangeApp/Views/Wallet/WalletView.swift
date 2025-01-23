@@ -27,13 +27,13 @@ struct WalletView: View {
                         Text("Available Currencies")
                     }
                     .headerProminence(.increased)
-                    Section {
-                        transactionHistory
-                            .transition(.slide)
-                    } header : {
-                        Text("Recent Transactions")
+                    NavigationLink(destination: transactionHistory) {
+                        HStack {
+                            Image(systemName: "list.bullet")
+                                .iconStyle(.title, AnyShape(RoundedRectangle(cornerRadius: 10)))
+                            Text("Transaction History")
+                        }
                     }
-                    .headerProminence(.increased)
                 }
                 .navigationTitle("Wallet")
                 .sheet(isPresented: $showSheet) {
@@ -49,23 +49,13 @@ struct WalletView: View {
     @ViewBuilder
     fileprivate var transactionHistory: some View {
         if let transactions = viewModel.currentUser?.transactionHistory, !transactions.isEmpty {
-            ForEach(showAllTransactions ? transactions : Array(transactions.prefix(2)), id: \.date) { transaction in
-                transactionRow(transaction: transaction)
-            }
-            if let transactionCount = viewModel.currentUser?.transactionHistory.count, transactionCount > 5 {
-                Button {
-                    showAllTransactions.toggle()
-                } label: {
-                    HStack {
-                        Image(systemName: showAllTransactions ? "eye.slash" : "eye")
-                            .contentTransition(.symbolEffect(.replace))
-                            .iconStyle(.title2)
-                        Text(showAllTransactions ? "Show Less" : "Show More")
-                            .foregroundStyle(Color(.black))
-                            .bold()
-                    }
+            List {
+                ForEach(transactions, id: \.date) { transaction in
+                    transactionRow(transaction: transaction)
                 }
             }
+            .listStyle(.plain)
+            .scrollIndicators(.hidden)
         } else {
             ContentUnavailableView("No recent transactions", systemImage: "clock")
         }
@@ -155,10 +145,8 @@ struct WalletView: View {
                 HStack {
                     Text("\(currency)")
                         .iconStyle(.caption)
-                    VStack(alignment: .leading) {
-                        Text("\(currency)")
-                        Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
-                    }
+                    Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
+                        .font(.headline)
                 }
             } else {
                 ContentUnavailableView("Your currency list is empty", systemImage: "dollarsign")

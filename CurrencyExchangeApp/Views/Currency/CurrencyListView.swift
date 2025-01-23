@@ -22,7 +22,6 @@ struct CurrencyListView: View {
                 List {
                     watchlistMenu
                         .listRowSeparator(.hidden)
-                    //MARK: Default Watchlist
                     if ((selectedWatchlist?.rates.isEmpty) != nil) {
                         currentWatchlist
                     } else {
@@ -39,6 +38,7 @@ struct CurrencyListView: View {
                 .toolbar(content: {
                     toolbarMenu
                 })
+//                .refreshable(action: currencyViewModel.fetchCurrencyRates)
                 .sheet(item: $selectedRate) { rate in
                     ItemSheetView(rate: rate)
                         .presentationDetents([.height(250)])
@@ -56,7 +56,7 @@ struct CurrencyListView: View {
                         selectedWatchlist = selectedWatchlist
                     }
                 }
-            }
+            } 
         }
     }
     
@@ -86,7 +86,6 @@ struct CurrencyListView: View {
                                         do {
                                             print("\(rate) is added to Firestore")
                                             try await userViewModel.addToWatchlist(watchlist: currentWatchlist, rate: rate)
-                                            selectedWatchlist = currentWatchlist
                                             print("Selected watchlist:\(String(describing: selectedWatchlist))")
                                             print("Watchlist to replace with: \(currentWatchlist)")
                                         } catch {
@@ -107,7 +106,7 @@ struct CurrencyListView: View {
                     }
                     Spacer()
                     VStack {
-                        Text(String(format: "%.4f", rate.mid) + "zł")
+                        Text(String(format: "%.4f", rate.mid ?? "N/A") + "zł")
                             .foregroundStyle(Color.primary)
                             .font(.headline)
                     }
@@ -132,9 +131,15 @@ struct CurrencyListView: View {
                     }
                     Spacer()
                     VStack {
-                        Text(String(format: "%.4f", rate.mid) + "zł")
-                            .foregroundStyle(Color.primary)
-                            .font(.headline)
+                        if let currentRate = currencyViewModel.rates.first(where: { $0.code == rate.code }) {
+                            Text(String(format: "%.4f", currentRate.mid ?? "N/A") + "zł")
+                                .foregroundStyle(Color.primary)
+                                .font(.headline)
+                        } else {
+                            Text("N/A")
+                                .foregroundStyle(Color.secondary)
+                                .font(.headline)
+                        }
                     }
                 }
                 .contentShape(Rectangle())
@@ -226,7 +231,6 @@ struct CurrencyListView: View {
             }
             Divider()
             Menu {
-                // Picker with sorting tags
                 Button {
                     
                 } label: {

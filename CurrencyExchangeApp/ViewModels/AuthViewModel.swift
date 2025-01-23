@@ -198,10 +198,6 @@ class AuthViewModel: ObservableObject {
     // MARK: Watchlist
     
     func createWatchlist(name: String) async throws -> Watchlist {
-//        guard let uid = getCurrentUserUID() else {
-//            throw NSError(domain: "AuthError", code: 1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
-//        }
-
         let watchlist = Watchlist(name: name)
         
         currentUser?.watchlists.append(watchlist)
@@ -210,6 +206,16 @@ class AuthViewModel: ObservableObject {
         try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
         
         return watchlist
+    }
+    
+    func addToWatchlist(watchlist: Watchlist, rate: Rate) async throws {
+        if let index = currentUser?.watchlists.firstIndex(where: { $0.name == watchlist.name }) {
+            currentUser?.watchlists[index].rates.append(rate)
+            
+            let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
+            
+            try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
+        }
     }
 
     func removeFromWatchlist(watchlist: Watchlist, rate: Rate) async throws {
@@ -222,18 +228,6 @@ class AuthViewModel: ObservableObject {
         let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
         
         try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
-    }
-    
-    func addToWatchlist(watchlist: Watchlist, rate: Rate) async throws {
-        if let index = currentUser?.watchlists.firstIndex(where: { $0.name == watchlist.name }) {
-            self.currentUser?.watchlists[index].rates.append(rate)
-            
-            currentUser = currentUser
-            
-            let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
-            
-            try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
-        }
     }
     
     // MARK: Firebase configuration
