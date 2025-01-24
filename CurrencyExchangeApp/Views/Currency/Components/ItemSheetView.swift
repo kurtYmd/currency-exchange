@@ -12,6 +12,7 @@ struct ItemSheetView: View {
     let rate: Rate
     @Environment(\.dismiss) private var dismiss
     @StateObject private var currencyViewModel = CurrencyViewModel()
+    @EnvironmentObject private var userViewModel: AuthViewModel
     @State private var isPresented = false
     @State private var transactionType: TransactionType = .buy
     @State private var selectedTimeframe: Timeframe = .week
@@ -44,12 +45,11 @@ struct ItemSheetView: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: -5) {
-                    Text(rate.code)
-                        .font(.largeTitle)
-                        .bold()
                     Text(rate.currency.capitalized)
-                        .foregroundStyle(Color(.secondaryLabel))
-                        .font(.caption)
+                        .font(.title)
+                        .bold()
+                    Text(String(format: "%.2f \(rate.code)", userViewModel.currentUser?.balance[rate.code] ?? 0.0))
+                        .font(.title3)
                         .fontWeight(.semibold)
                 }
                 
@@ -65,17 +65,11 @@ struct ItemSheetView: View {
             }
             .padding(.top)
             
-            Divider()
+            exchangeButton
             
             VStack(alignment: .leading) {
                 VStack {
-                    Text(String(format: "%.2f", rate.mid ?? "N/A"))
-                        .fontWeight(.bold)
-                    Text(selectedTimeframe.description)
-                        .animation(.easeInOut)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color(.secondaryLabel))
+                    annotation
                 }.padding(.bottom, 5)
                 Text("\(rate.currency.capitalized) • \(rate.code)")
                     .foregroundStyle(Color(.secondaryLabel))
@@ -83,40 +77,11 @@ struct ItemSheetView: View {
                     .fontWeight(.semibold)
             }
             
-            Divider()
-            
             VStack {
-                timeframePicker
                 chart
                     .frame(height: 250)
+                timeframePicker
             }
-            
-            HStack(spacing: 15) {
-                Button {
-                    presentExchangeSheet(for: .buy)
-                } label: {
-                    Text("Buy")
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(Color(.systemGreen))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-                
-                Button {
-                    presentExchangeSheet(for: .sell)
-                } label: {
-                    Text("Sell")
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(Color(.systemRed))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-            }
-            .padding(.top, 10)
         }
         .onAppear() {
             currencyViewModel.fetchCurrencyRatesHistory(code: rate.code, timeframe: selectedTimeframe)
@@ -162,13 +127,9 @@ struct ItemSheetView: View {
             }
             .frame(height: 250)
             .chartXSelection(value: $selectedDate)
-            //.animation(.easeInOut)
             .chartYScale(domain: (minMid)...(maxMid))
             .chartXAxis {
-                AxisMarks {
-                    AxisGridLine()
-                    AxisValueLabel()
-                }
+                
             }
             
         } else {
@@ -182,25 +143,35 @@ struct ItemSheetView: View {
         if let selectedExchangeRate {
             RuleMark(x: .value("Selected Date", selectedExchangeRate.effectiveDate))
                 .foregroundStyle(lineColor.opacity(0.7))
-                .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
-                    VStack {
-                        Text(selectedExchangeRate.effectiveDate.formatted(date: .abbreviated, time: .omitted))
-                            .fontWeight(.bold)
-                        Text(String(format: "%.4f", selectedExchangeRate.mid))
-                            .fontWeight(.semibold)
-                    }
-                    .font(.caption)
-                    .padding()
-                    .frame(width: 120)
-                    .foregroundStyle(Color.white)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(.cyan.gradient))
-                }
             PointMark(
                 x: .value("Selected Date", selectedExchangeRate.effectiveDate),
                 y: .value("Selected Rate", selectedExchangeRate.mid)
             )
             .foregroundStyle(lineColor)
             .symbolSize(40)
+        }
+    }
+    
+    @ViewBuilder
+    private var annotation: some View {
+        if let selectedExchangeRate {
+            Text(String(format: "%.4f", selectedExchangeRate.mid))
+                .animation(.default)
+                .fontWeight(.bold)
+            Text(selectedExchangeRate.effectiveDate.formatted(date: .abbreviated, time: .omitted))
+                .animation(.default)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color(.secondaryLabel))
+        } else {
+            Text(String(format: "%.4f", rate.mid ?? 0.0))
+                .animation(.default)
+                .fontWeight(.bold)
+            Text(selectedTimeframe.description)
+                .animation(.default)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color(.secondaryLabel))
         }
     }
     
@@ -231,5 +202,34 @@ struct ItemSheetView: View {
         }
         .scrollIndicators(.hidden)
     }
-
+    
+    @ViewBuilder
+    private var exchangeButton: some View {
+        HStack(spacing: 15) {
+            Button {
+                presentExchangeSheet(for: .buy)
+            } label: {
+                Text("Buy")
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color(.systemGreen))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            
+            Button {
+                presentExchangeSheet(for: .sell)
+            } label: {
+                Text("Sell")
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color(.systemRed))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+        }
+        .padding(.top, 10)
+    }
 }
