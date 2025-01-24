@@ -32,7 +32,13 @@ struct ItemSheetView: View {
         }
     }
     
-//    private var gradientColor: Color {
+    private var minMid: Double {
+            currencyViewModel.rateHistory.map { $0.mid }.min() ?? 0.0
+        }
+        
+    private var maxMid: Double {
+        currencyViewModel.rateHistory.map { $0.mid }.max() ?? 0.0
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -133,22 +139,7 @@ struct ItemSheetView: View {
     private var chart: some View {
         if !currencyViewModel.rateHistory.isEmpty {
             Chart {
-                if let selectedExchangeRate {
-                    RuleMark(x: .value("Selected Date", selectedExchangeRate.effectiveDate))
-                        .foregroundStyle(lineColor.opacity(0.7))
-                        .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
-                            VStack {
-                                Text(String(format: "%.4f", selectedExchangeRate.mid))
-                                    .bold()
-                                Text(selectedExchangeRate.effectiveDate.formatted(date: .abbreviated, time: .omitted))
-                            }
-                            .font(.caption2)
-                            .foregroundStyle(Color.white)
-                            .padding()
-                            .frame(width: 100)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(lineColor.gradient))
-                        }
-                }
+                indicator
                 ForEach(currencyViewModel.rateHistory) {
                     LineMark(
                         x: .value("Date", $0.effectiveDate),
@@ -162,19 +153,54 @@ struct ItemSheetView: View {
                     )
                     .foregroundStyle(
                         LinearGradient(
-                            gradient: Gradient(colors : [lineColor.opacity(0.4), .clear]),
+                            gradient: Gradient(colors: [lineColor, .clear]),
                             startPoint: .top,
-                            endPoint: .bottom)
+                            endPoint: .bottom
+                        )
                     )
                 }
             }
+            .frame(height: 250)
             .chartXSelection(value: $selectedDate)
             //.animation(.easeInOut)
-            .frame(height: 250)
-            .chartYScale(domain: (currencyViewModel.rateHistory.map { $0.mid}.min() ?? 0.0)...(currencyViewModel.rateHistory.map { $0.mid}.max() ?? 0.0))
+            .chartYScale(domain: (minMid)...(maxMid))
+            .chartXAxis {
+                AxisMarks {
+                    AxisGridLine()
+                    AxisValueLabel()
+                }
+            }
+            
         } else {
             ProgressView()
                 .frame(height: 250)
+        }
+    }
+    
+    @ChartContentBuilder
+    private var indicator: some ChartContent {
+        if let selectedExchangeRate {
+            RuleMark(x: .value("Selected Date", selectedExchangeRate.effectiveDate))
+                .foregroundStyle(lineColor.opacity(0.7))
+                .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                    VStack {
+                        Text(selectedExchangeRate.effectiveDate.formatted(date: .abbreviated, time: .omitted))
+                            .fontWeight(.bold)
+                        Text(String(format: "%.4f", selectedExchangeRate.mid))
+                            .fontWeight(.semibold)
+                    }
+                    .font(.caption)
+                    .padding()
+                    .frame(width: 120)
+                    .foregroundStyle(Color.white)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(.cyan.gradient))
+                }
+            PointMark(
+                x: .value("Selected Date", selectedExchangeRate.effectiveDate),
+                y: .value("Selected Rate", selectedExchangeRate.mid)
+            )
+            .foregroundStyle(lineColor)
+            .symbolSize(40)
         }
     }
     
@@ -186,7 +212,6 @@ struct ItemSheetView: View {
                     Button {
                         selectedTimeframe = timeframe
                         currencyViewModel.fetchCurrencyRatesHistory(code: rate.code, timeframe: timeframe)
-                        //(timeframe.abbreviation, timeframe.dateString)
                     } label: {
                         Text(timeframe.abbreviation)
                             .font(.footnote)

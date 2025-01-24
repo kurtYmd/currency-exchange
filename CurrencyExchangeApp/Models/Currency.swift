@@ -24,6 +24,7 @@ struct CurrencyRates: Codable {
 }
 
 struct RateHistory: Decodable, Identifiable {
+    
     var id: Date {
         effectiveDate
     }

@@ -22,7 +22,15 @@ class CurrencyViewModel: ObservableObject {
         fetchCurrencyRates()
     }
     
-   var filterCurrency: [Rate] {
+    var effectiveDates: [Date] {
+        rateHistory.map{ $0.effectiveDate}
+    }
+    
+    var mids: [Double] {
+        rateHistory.map{ $0.mid}
+    }
+    
+    var filterCurrency: [Rate] {
         guard !searchText.isEmpty else { return rates }
         
         return rates.filter { rate in

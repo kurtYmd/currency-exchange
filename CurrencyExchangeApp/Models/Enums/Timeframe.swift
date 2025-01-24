@@ -33,7 +33,7 @@ enum Timeframe: CaseIterable, Identifiable {
         case .week:
             return dateFormatter.string(from: calendar.date(byAdding: .day, value: -7, to: Date())!)
         case .month:
-            return dateFormatter.string(from: calendar.date(byAdding: .month, value: -1, to: Date())!)
+            return dateFormatter.string(from: calendar.date(byAdding: .day, value: -30, to: Date())!)
         case .quarter:
             return dateFormatter.string(from: calendar.date(byAdding: .month, value: -3, to: Date())!)
         case .halfYear:
