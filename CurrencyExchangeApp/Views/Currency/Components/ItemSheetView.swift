@@ -24,13 +24,15 @@ struct ItemSheetView: View {
         })
     }
     
-    private var lineColor : Color {
+    private var lineColor: Color {
         if selectedDate != nil {
-            return Color.indigo
+            return Color.cyan
         } else {
             return currencyViewModel.getLineColor()
         }
     }
+    
+//    private var gradientColor: Color {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -78,14 +80,7 @@ struct ItemSheetView: View {
             Divider()
             
             VStack {
-                if let selectedExchangeRate {
-                    HStack(spacing: 14) {
-                        Text(selectedExchangeRate.effectiveDate.formatted(date: .abbreviated, time: .omitted))
-                            .padding(.bottom, 8)
-                    }
-                } else {
-                    timeframePicker
-                }
+                timeframePicker
                 chart
                     .frame(height: 250)
             }
@@ -140,10 +135,18 @@ struct ItemSheetView: View {
             Chart {
                 if let selectedExchangeRate {
                     RuleMark(x: .value("Selected Date", selectedExchangeRate.effectiveDate))
-                        .foregroundStyle(.indigo.opacity(0.7))
+                        .foregroundStyle(lineColor.opacity(0.7))
                         .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
-                            Text(String(format: "%.4f", selectedExchangeRate.mid))
-                                .foregroundStyle(Color.indigo)
+                            VStack {
+                                Text(String(format: "%.4f", selectedExchangeRate.mid))
+                                    .bold()
+                                Text(selectedExchangeRate.effectiveDate.formatted(date: .abbreviated, time: .omitted))
+                            }
+                            .font(.caption2)
+                            .foregroundStyle(Color.white)
+                            .padding()
+                            .frame(width: 100)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(lineColor.gradient))
                         }
                 }
                 ForEach(currencyViewModel.rateHistory) {
@@ -157,15 +160,16 @@ struct ItemSheetView: View {
                         yStart: .value("Min", currencyViewModel.rateHistory.map { $0.mid }.min() ?? 0.0),
                         yEnd: .value("Max", $0.mid)
                     )
-                    .foregroundStyle(LinearGradient(gradient: Gradient(colors : [lineColor.opacity(0.4), .clear]), startPoint: .top, endPoint: .bottom))
-//                    .animation(.easeInOut)
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors : [lineColor.opacity(0.4), .clear]),
+                            startPoint: .top,
+                            endPoint: .bottom)
+                    )
                 }
             }
-            .animation(.linear)
-            .chartXSelection(value: $selectedDate.animation(.easeInOut))
-            .onChange(of: selectedDate) {
-                print(selectedDate)
-            }
+            .chartXSelection(value: $selectedDate)
+            //.animation(.easeInOut)
             .frame(height: 250)
             .chartYScale(domain: (currencyViewModel.rateHistory.map { $0.mid}.min() ?? 0.0)...(currencyViewModel.rateHistory.map { $0.mid}.max() ?? 0.0))
         } else {
