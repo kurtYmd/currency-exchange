@@ -6,12 +6,31 @@
 //
 
 import SwiftUI
+import Charts
 
 struct ItemSheetView: View {
     let rate: Rate
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var currencyViewModel = CurrencyViewModel()
     @State private var isPresented = false
     @State private var transactionType: TransactionType = .buy
+    @State private var selectedTimeframe: Timeframe = .week
+    @State private var selectedDate: Date?
+    
+    private var selectedExchangeRate: RateHistory? {
+        guard let selectedDate else { return nil }
+        return currencyViewModel.rateHistory.first(where: {
+            Calendar.current.isDate($0.effectiveDate, inSameDayAs: selectedDate)
+        })
+    }
+    
+    private var lineColor : Color {
+        if selectedDate != nil {
+            return Color.indigo
+        } else {
+            return currencyViewModel.getLineColor()
+        }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -41,12 +60,34 @@ struct ItemSheetView: View {
             Divider()
             
             VStack(alignment: .leading) {
-                Text(String(format: "%.2f", rate.mid ?? "N/A"))
-                    .fontWeight(.semibold)
+                VStack {
+                    Text(String(format: "%.2f", rate.mid ?? "N/A"))
+                        .fontWeight(.bold)
+                    Text(selectedTimeframe.description)
+                        .animation(.easeInOut)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color(.secondaryLabel))
+                }.padding(.bottom, 5)
                 Text("\(rate.currency.capitalized) • \(rate.code)")
                     .foregroundStyle(Color(.secondaryLabel))
                     .font(.caption)
                     .fontWeight(.semibold)
+            }
+            
+            Divider()
+            
+            VStack {
+                if let selectedExchangeRate {
+                    HStack(spacing: 14) {
+                        Text(selectedExchangeRate.effectiveDate.formatted(date: .abbreviated, time: .omitted))
+                            .padding(.bottom, 8)
+                    }
+                } else {
+                    timeframePicker
+                }
+                chart
+                    .frame(height: 250)
             }
             
             HStack(spacing: 15) {
@@ -76,14 +117,90 @@ struct ItemSheetView: View {
             }
             .padding(.top, 10)
         }
+        .onAppear() {
+            currencyViewModel.fetchCurrencyRatesHistory(code: rate.code, timeframe: selectedTimeframe)
+            print(currencyViewModel.rateHistory)
+        }
         .padding()
         .sheet(isPresented: $isPresented) {
             ExchangeSheetView(rate: rate, transactionType: transactionType, amount: "")
                 .presentationDetents([.height(200)])
         }
     }
+    
+    
     private func presentExchangeSheet(for type: TransactionType) {
         transactionType = type
         isPresented = true
     }
+    
+    @ViewBuilder
+    private var chart: some View {
+        if !currencyViewModel.rateHistory.isEmpty {
+            Chart {
+                if let selectedExchangeRate {
+                    RuleMark(x: .value("Selected Date", selectedExchangeRate.effectiveDate))
+                        .foregroundStyle(.indigo.opacity(0.7))
+                        .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                            Text(String(format: "%.4f", selectedExchangeRate.mid))
+                                .foregroundStyle(Color.indigo)
+                        }
+                }
+                ForEach(currencyViewModel.rateHistory) {
+                    LineMark(
+                        x: .value("Date", $0.effectiveDate),
+                        y: .value("Rate", $0.mid)
+                    )
+                    .foregroundStyle(lineColor)
+                    AreaMark(
+                        x: .value("Date", $0.effectiveDate),
+                        yStart: .value("Min", currencyViewModel.rateHistory.map { $0.mid }.min() ?? 0.0),
+                        yEnd: .value("Max", $0.mid)
+                    )
+                    .foregroundStyle(LinearGradient(gradient: Gradient(colors : [lineColor.opacity(0.4), .clear]), startPoint: .top, endPoint: .bottom))
+//                    .animation(.easeInOut)
+                }
+            }
+            .animation(.linear)
+            .chartXSelection(value: $selectedDate.animation(.easeInOut))
+            .onChange(of: selectedDate) {
+                print(selectedDate)
+            }
+            .frame(height: 250)
+            .chartYScale(domain: (currencyViewModel.rateHistory.map { $0.mid}.min() ?? 0.0)...(currencyViewModel.rateHistory.map { $0.mid}.max() ?? 0.0))
+        } else {
+            ProgressView()
+                .frame(height: 250)
+        }
+    }
+    
+    @ViewBuilder
+    private var timeframePicker: some View {
+        ScrollView(.horizontal) {
+            HStack {
+                ForEach(Timeframe.allCases, id: \.self) { timeframe in
+                    Button {
+                        selectedTimeframe = timeframe
+                        currencyViewModel.fetchCurrencyRatesHistory(code: rate.code, timeframe: timeframe)
+                        //(timeframe.abbreviation, timeframe.dateString)
+                    } label: {
+                        Text(timeframe.abbreviation)
+                            .font(.footnote)
+                            .fontWeight(timeframe == selectedTimeframe ? .bold : .semibold)
+                            .padding(8)
+                    }
+                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
+                    .background {
+                        if timeframe == selectedTimeframe {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.gray.opacity(0.2))
+                        }
+                    }
+                }
+            }
+        }
+        .scrollIndicators(.hidden)
+    }
+
 }

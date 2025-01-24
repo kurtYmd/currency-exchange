@@ -23,3 +23,15 @@ struct CurrencyRates: Codable {
     let rates: [Rate]
 }
 
+struct RateHistory: Decodable, Identifiable {
+    var id: Date {
+        effectiveDate
+    }
+    let effectiveDate: Date
+    let mid: Double
+}
+
+struct RateHistoryResponse: Decodable {
+    let rates: [RateHistory]
+}
+

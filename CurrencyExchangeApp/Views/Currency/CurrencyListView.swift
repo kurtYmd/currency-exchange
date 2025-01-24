@@ -12,6 +12,7 @@ struct CurrencyListView: View {
     @EnvironmentObject private var userViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var selectedRate: Rate? = nil
+//    @State private var entry: WatchlistEntry
     @State private var selectedWatchlist: Watchlist?
     @State private var isAlertShown: Bool = false
     @State private var watchlistText: String = ""
@@ -38,10 +39,12 @@ struct CurrencyListView: View {
                 .toolbar(content: {
                     toolbarMenu
                 })
-//                .refreshable(action: currencyViewModel.fetchCurrencyRates)
+                .refreshable {
+                    currencyViewModel.fetchCurrencyRates()
+                }
                 .sheet(item: $selectedRate) { rate in
                     ItemSheetView(rate: rate)
-                        .presentationDetents([.height(250)])
+//                        .presentationDetents([.height(500)])
                 }
                 .alert("New Watchlist", isPresented: $isAlertShown, actions: {
                     createWatchlistAlert
