@@ -90,10 +90,9 @@ struct ItemSheetView: View {
         .padding()
         .sheet(isPresented: $isPresented) {
             ExchangeSheetView(rate: rate, transactionType: transactionType, amount: "")
-                .presentationDetents([.height(200)])
+//                .presentationDetents([.height(200)])
         }
     }
-    
     
     private func presentExchangeSheet(for type: TransactionType) {
         transactionType = type
@@ -110,27 +109,34 @@ struct ItemSheetView: View {
                         x: .value("Date", $0.effectiveDate),
                         y: .value("Rate", $0.mid)
                     )
+                    .interpolationMethod(.cardinal)
                     .foregroundStyle(lineColor)
                     AreaMark(
                         x: .value("Date", $0.effectiveDate),
                         yStart: .value("Min", currencyViewModel.rateHistory.map { $0.mid }.min() ?? 0.0),
                         yEnd: .value("Max", $0.mid)
                     )
+                    .interpolationMethod(.cardinal)
                     .foregroundStyle(
                         LinearGradient(
-                            gradient: Gradient(colors: [lineColor, .clear]),
+                            gradient: Gradient(colors: [lineColor.opacity(0.4), .clear]),
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
                 }
             }
+            .onChange(of: selectedDate) {
+                print("DEBUG DATE: \(selectedExchangeRate?.effectiveDate)")
+                print("DEBUG RATE: \(selectedExchangeRate?.mid)")
+            }
             .frame(height: 250)
             .chartXSelection(value: $selectedDate)
+//            .chartXScale(domain: (currencyViewModel.rateHistory.first?.effectiveDate ?? Date())...(Date()))
             .chartYScale(domain: (minMid)...(maxMid))
-            .chartXAxis {
-                
-            }
+//            .chartXAxis {
+//                
+//            }
             
         } else {
             ProgressView()
@@ -156,19 +162,15 @@ struct ItemSheetView: View {
     private var annotation: some View {
         if let selectedExchangeRate {
             Text(String(format: "%.4f", selectedExchangeRate.mid))
-                .animation(.default)
                 .fontWeight(.bold)
             Text(selectedExchangeRate.effectiveDate.formatted(date: .abbreviated, time: .omitted))
-                .animation(.default)
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(Color(.secondaryLabel))
         } else {
             Text(String(format: "%.4f", rate.mid ?? 0.0))
-                .animation(.default)
                 .fontWeight(.bold)
             Text(selectedTimeframe.description)
-                .animation(.default)
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(Color(.secondaryLabel))

@@ -11,7 +11,7 @@ struct ExchangeSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var viewModel: AuthViewModel
     let rate: Rate
-    @State var transactionType: TransactionType
+    @State var transactionType: TransactionType = .buy
     @State var isPresented = false
     @State var amount: String
     //TODO: Add animation if can't exchange due to error
@@ -20,41 +20,70 @@ struct ExchangeSheetView: View {
         if viewModel.currentUser != nil {
             NavigationStack {
                 VStack {
-                    TextField("0", text: $amount)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(PlainTextFieldStyle())
-                        .multilineTextAlignment(.center)
-                        .font(.largeTitle)
-                        .bold()
-                        .padding(.horizontal)
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text("You pay")
+                            Spacer()
+                            HStack {
+                                Text("Max:")
+                                Text(String(format: "%.0f \(rate.code)", viewModel.currentUser?.balance[rate.code] ?? 0.0))
+                                    .foregroundStyle(Color.secondary)
+                            }
+                        }
+                        HStack {
+                            TextField("0", text: $amount)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(PlainTextFieldStyle())
+    //                            .multilineTextAlignment(.center)
+                                .font(.system(size: 55))
+                                .bold()
+    //                            .padding(.horizontal)
+                            Text(rate.code)
+                                .foregroundStyle(Color.secondary)
+                                .font(.system(size: 55))
+                                .bold()
+                        }
+                    }
+                    .padding(.top)
+                    ZStack(alignment: .trailing) {
+                        Divider()
+                        Button {
+                            
+                        } label : {
+                            HStack(spacing: -5) {
+                                Image(systemName: "arrow.up")
+                                    .symbolEffect(.wiggle.up.byLayer, options: .repeat(.continuous))
+                                Image(systemName: "arrow.down")
+                                    .symbolEffect(.wiggle.down.byLayer, options: .repeat(.continuous))
+                            }
+                            .iconStyle(font: .title2, fontColor: .black)
+                        }
+                    }
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text("You receive")
+                        }
+                        HStack {
+                            TextField("0", text: $amount)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .font(.system(size: 55))
+                                .bold()
+                            Text(rate.code)
+                                .foregroundStyle(Color.secondary)
+                                .font(.system(size: 55))
+                                .bold()
+                        }
+                    }
                 }
-                .navigationTitle(transactionType == .buy ? "Buy \(rate.code)" : "Sell \(rate.code)")
-                .navigationBarTitleDisplayMode(.inline)
+                .padding(.horizontal)
+                Spacer()
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         Button {
                             dismiss()
                         } label: {
                             Text("Cancel")
-                        }
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        if transactionType == .buy {
-                            Button {
-                                isPresented = true
-                            } label: {
-                                Text("Buy")
-                            }
-                            // Handle amount validation
-                            .disabled(amount.isEmpty)
-                        } else if transactionType == .sell {
-                            Button {
-                                isPresented = true
-                            } label: {
-                                Text("Sell")
-                            }
-                            // Handle amount validation
-                            .disabled(amount.isEmpty)
                         }
                     }
                 }

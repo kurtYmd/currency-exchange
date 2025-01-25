@@ -30,7 +30,7 @@ struct WalletView: View {
                     NavigationLink(destination: transactionHistory) {
                         HStack {
                             Image(systemName: "list.bullet")
-                                .iconStyle(.title, AnyShape(RoundedRectangle(cornerRadius: 10)))
+                                .iconStyle(font: .title, shape: AnyShape(RoundedRectangle(cornerRadius: 10)))
                             Text("Transaction History")
                         }
                     }
@@ -144,7 +144,7 @@ struct WalletView: View {
             if viewModel.currentUser?.balance[currency] != 0.0 {
                 HStack {
                     Text("\(currency)")
-                        .iconStyle(.caption)
+                        .iconStyle(font: .caption)
                     Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
                         .font(.headline)
                 }
@@ -159,22 +159,24 @@ struct WalletView: View {
 struct IconModifier: ViewModifier {
     var font: Font = .title
     var shape: AnyShape = AnyShape(Circle())
+    var fontColor: Color = .white
+    var backgroundColor: UIColor = .systemGray3
     
     func body(content: Content) -> some View {
         content
             .font(font)
-            .foregroundStyle(Color(.white))
+            .foregroundStyle(fontColor)
             .fontWeight(.semibold)
             .frame(width: 40, height: 40)
-            .background(Color(.systemGray3))
+            .background(Color(backgroundColor))
             .clipShape(shape)
             .padding(2)
     }
 }
 
 extension View {
-    func iconStyle(_ font: Font = .title, _ shape: AnyShape = AnyShape(Circle())) -> some View {
-        modifier(IconModifier(font: font, shape: shape))
+    func iconStyle(font: Font = .title,shape: AnyShape = AnyShape(Circle()),fontColor: Color = .white, backgroundColor: UIColor = .systemGray3) -> some View {
+        modifier(IconModifier(font: font, shape: shape, fontColor: fontColor, backgroundColor: backgroundColor))
     }
 }
 
