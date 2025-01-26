@@ -13,7 +13,8 @@ struct ExchangeSheetView: View {
     let rate: Rate
     @State var transactionType: TransactionType = .buy
     @State var isPresented = false
-    @State var amount: String
+    @State var amount: String = ""
+    @State var receiveValue: String = ""
 
     var body: some View {
         if viewModel.currentUser != nil {
@@ -22,9 +23,6 @@ struct ExchangeSheetView: View {
                 Spacer()
                 exchangeButton
                 .toolbar {
-                    ToolbarItem(placement: .automatic) {
-                        
-                    }
                     ToolbarItem(placement: .topBarLeading) {
                         Button {
                             dismiss()
@@ -96,7 +94,7 @@ struct ExchangeSheetView: View {
                         }
                     }
                     HStack {
-                        TextField("0", text: $amount)
+                        TextField("0", text: $receiveValue)
                             .keyboardType(.decimalPad)
                             .textFieldStyle(PlainTextFieldStyle())
                             .font(.system(size: 55))
@@ -109,8 +107,7 @@ struct ExchangeSheetView: View {
                 }
                 .padding(.top)
             }
-
-            // Unified Toggle Button
+            
             toggleExchangeType
 
             if transactionType == .buy {
@@ -119,7 +116,7 @@ struct ExchangeSheetView: View {
                         Text("You receive")
                     }
                     HStack {
-                        TextField("0", text: $amount)
+                        TextField("0", text: $receiveValue)
                             .keyboardType(.decimalPad)
                             .textFieldStyle(PlainTextFieldStyle())
                             .font(.system(size: 55))
@@ -150,6 +147,19 @@ struct ExchangeSheetView: View {
             }
         }
         .padding(.horizontal)
+        .onChange(of: amount) { oldValue, newValue in
+            let value = (Double(newValue) ?? 0) * (rate.mid ?? 0)
+            receiveValue = String(format: "%.3f", value)
+        }
+        .onChange(of: receiveValue) { oldValue, newValue in
+            let value = (Double(newValue) ?? 0) / (rate.mid ?? 0)
+            amount = String(format: "%.3f", value)
+        }
+    }
+    
+    private func calculcateAmount(amount: String) {
+        
+        
     }
     
     private var exchangeButton: some View {
