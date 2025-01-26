@@ -215,6 +215,12 @@ class AuthViewModel: ObservableObject {
             let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
             
             try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
+            
+            // Reassign to trigger @Published
+            if var updatedUser = currentUser {
+                updatedUser.watchlists = currentUser?.watchlists ?? []
+                self.currentUser = updatedUser
+            }
         }
     }
 
@@ -228,6 +234,12 @@ class AuthViewModel: ObservableObject {
         let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
         
         try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
+        
+        // Reassign to trigger @Published
+        if var updatedUser = currentUser {
+            updatedUser.watchlists = currentUser?.watchlists ?? []
+            self.currentUser = updatedUser
+        }
     }
     
     // MARK: Firebase configuration

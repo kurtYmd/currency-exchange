@@ -12,21 +12,37 @@ struct CurrencyListView: View {
     @EnvironmentObject private var userViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var selectedRate: Rate? = nil
-//    @State private var entry: WatchlistEntry
-    @State private var selectedWatchlist: Watchlist?
     @State private var isAlertShown: Bool = false
     @State private var watchlistText: String = ""
     
+    // Bind to userViewModel's watchlists
+    @State private var selectedWatchlistID: String?
+
+    var selectedWatchlist: Watchlist? {
+        userViewModel.currentUser?.watchlists.first { $0.id == selectedWatchlistID }
+    }
+
     var body: some View {
         if userViewModel.currentUser != nil {
             NavigationStack {
                 List {
                     watchlistMenu
                         .listRowSeparator(.hidden)
-                    if ((selectedWatchlist?.rates.isEmpty) != nil) {
+                    if let watchlist = selectedWatchlist, !watchlist.rates.isEmpty {
                         currentWatchlist
                     } else {
-                        ContentUnavailableView("No rates added to watchlist", systemImage: "xmark")
+                        VStack {
+                            Spacer()
+                            ContentUnavailableView(
+                                "No Currencies",
+                                systemImage: "dollarsign",
+                                description: Text("Add a currency to your watchlist to see exchange rate.")
+                            )
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 100)
+                        }
+                        .frame(maxHeight: .infinity)
+                        .listRowSeparator(.hidden)
                     }
                 }
                 .listStyle(.plain)
@@ -44,7 +60,6 @@ struct CurrencyListView: View {
                 }
                 .sheet(item: $selectedRate) { rate in
                     ItemSheetView(rate: rate)
-//                        .presentationDetents([.height(500)])
                 }
                 .alert("New Watchlist", isPresented: $isAlertShown, actions: {
                     createWatchlistAlert
@@ -53,13 +68,20 @@ struct CurrencyListView: View {
                 })
                 .onAppear {
                     currencyViewModel.fetchCurrencyRates()
-                    if selectedWatchlist == nil {
-                        selectedWatchlist = userViewModel.currentUser?.watchlists[0]
-                    } else {
-                        selectedWatchlist = selectedWatchlist
+                    if selectedWatchlistID == nil, let firstWatchlist = userViewModel.currentUser?.watchlists.first {
+                        selectedWatchlistID = firstWatchlist.id
+                    }
+                }
+                .onChange(of: userViewModel.currentUser?.watchlists) {
+                    // Ensure selectedWatchlistID is valid
+                    if let watchlists = userViewModel.currentUser?.watchlists, !watchlists.contains(where: { $0.id == selectedWatchlistID }) {
+                        selectedWatchlistID = watchlists.first?.id
                     }
                 }
             } 
+        } else {
+            // Handle not logged in state
+            ContentUnavailableView("Please log in to view your watchlists.", systemImage: "person.crop.circle.badge.xmark")
         }
     }
     
@@ -87,10 +109,7 @@ struct CurrencyListView: View {
                                 .onTapGesture {
                                     Task {
                                         do {
-                                            print("\(rate) is added to Firestore")
                                             try await userViewModel.addToWatchlist(watchlist: currentWatchlist, rate: rate)
-                                            print("Selected watchlist:\(String(describing: selectedWatchlist))")
-                                            print("Watchlist to replace with: \(currentWatchlist)")
                                         } catch {
                                             print("Failed to add rate to watchlist: \(error)")
                                         }
@@ -170,7 +189,7 @@ struct CurrencyListView: View {
         Menu {
             ForEach(userViewModel.currentUser?.watchlists ?? []) { watchlist in
                 Button {
-                    selectedWatchlist = watchlist
+                    selectedWatchlistID = watchlist.id
                 } label: {
                     Text(watchlist.name)
                 }
@@ -215,7 +234,7 @@ struct CurrencyListView: View {
         Button("Save") {
             Task {
                let newWatchlist = try await userViewModel.createWatchlist(name: watchlistText)
-                selectedWatchlist = newWatchlist
+                selectedWatchlistID = newWatchlist.id
                 dismiss()
             }
         }
