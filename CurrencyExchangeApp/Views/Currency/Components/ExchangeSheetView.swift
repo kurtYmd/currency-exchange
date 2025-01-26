@@ -148,11 +148,11 @@ struct ExchangeSheetView: View {
         }
         .padding(.horizontal)
         .onChange(of: amount) { oldValue, newValue in
-            let value = (Double(newValue) ?? 0) * (rate.mid ?? 0)
+            let value = (Double(newValue) ?? 0) * /*(rate.mid ?? 0)*/ 2
             receiveValue = String(format: "%.3f", value)
         }
         .onChange(of: receiveValue) { oldValue, newValue in
-            let value = (Double(newValue) ?? 0) / (rate.mid ?? 0)
+            let value = (Double(newValue) ?? 0) / /*(rate.mid ?? 0)*/ 2
             amount = String(format: "%.3f", value)
         }
     }
