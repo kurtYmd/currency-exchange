@@ -90,7 +90,6 @@ struct ItemSheetView: View {
         .padding()
         .sheet(isPresented: $isPresented) {
             ExchangeSheetView(rate: rate, transactionType: transactionType, amount: "")
-//                .presentationDetents([.height(200)])
         }
     }
     

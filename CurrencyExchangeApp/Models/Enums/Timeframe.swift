@@ -28,7 +28,7 @@ enum Timeframe: CaseIterable, Identifiable {
         
         switch self {
         case .day:
-            return dateFormatter.string(from: calendar.date(byAdding: .day, value: -1, to: Date())!)
+            return dateFormatter.string(from: calendar.date(byAdding: .day, value: -2, to: Date())!)
         case .week:
             return dateFormatter.string(from: calendar.date(byAdding: .day, value: -7, to: Date())!)
         case .twoWeeks:
