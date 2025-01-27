@@ -15,6 +15,14 @@ struct ExchangeSheetView: View {
     @State var isPresented = false
     @State var amount: String = ""
     @State var receiveValue: String = ""
+    
+//    private var maxPLN: Double {
+//        
+//    }
+//    
+//    private var maxExchange: Double {
+//        
+//    }
 
     var body: some View {
         if viewModel.currentUser != nil {
@@ -35,21 +43,25 @@ struct ExchangeSheetView: View {
                     if transactionType == .buy {
                         Button("Buy \(receiveValue) \(rate.code)", role: .destructive) {
                             Task {
-                                try await viewModel.buyCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid ?? 0.0)
+                                try await viewModel.buyCurrency(amount:  Double(receiveValue) ?? 0.0, currencyCode: rate.code, rate: rate.mid ?? 0.0)
                             }
                             isPresented = false
                         }
                     } else {
                         Button("Sell \(receiveValue) \(rate.code)", role: .destructive) {
                             Task {
-                                try await viewModel.sellCurrency(amount: Double(amount) ?? 0.0, currencyCode: rate.code, rate: rate.mid ?? 0.0)
+                                try await viewModel.sellCurrency(amount: Double(receiveValue) ?? 0.0, currencyCode: rate.code, rate: rate.mid ?? 0.0)
                             }
                             isPresented = false
                         }
                     }
                     Button ("Cancel Transaction", role: .cancel) { }
                 } message: {
-                    Text("Are you sure you want to " + (transactionType == .buy ? "buy": "sell") + " \(amount) \(transactionType == .buy ? "PLN" : rate.code)")
+                    if transactionType == .buy {
+                        Text("Are you sure you want to buy \(receiveValue) \(rate.code)?")
+                    } else if transactionType == .sell {
+                        Text("Are you sure you want to sell \(receiveValue) \(rate.code)?")
+                    }
                 }
             }
         }
@@ -72,12 +84,18 @@ struct ExchangeSheetView: View {
                                 .foregroundStyle(Color.secondary)
                         }
                     }
-                    HStack {
-                        TextField("0", text: $amount)
-                            .keyboardType(.decimalPad)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .font(.system(size: 55))
-                            .bold()
+                    HStack(alignment: .firstTextBaseline) {
+                        VStack {
+                            TextField("0", text: $amount)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .font(.system(size: 55))
+                                .bold()
+                            Text("Not enough funds.")
+                                .font(.caption)
+                                .foregroundStyle(Color.red)
+                        }
+                        
                         Text("PLN")
                             .foregroundStyle(Color.secondary)
                             .font(.system(size: 55))
@@ -99,12 +117,17 @@ struct ExchangeSheetView: View {
                                 .foregroundStyle(Color.secondary)
                         }
                     }
-                    HStack {
-                        TextField("0", text: $receiveValue)
-                            .keyboardType(.decimalPad)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .font(.system(size: 55))
-                            .bold()
+                    HStack(alignment: .firstTextBaseline) {
+                        VStack {
+                            TextField("0", text: $receiveValue)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .font(.system(size: 55))
+                                .bold()
+                            Text("Not enough funds.")
+                                .font(.caption)
+                                .foregroundStyle(Color.red)
+                        }
                         Text(rate.code)
                             .foregroundStyle(Color.secondary)
                             .font(.system(size: 55))
@@ -154,18 +177,13 @@ struct ExchangeSheetView: View {
         }
         .padding(.horizontal)
         .onChange(of: amount) { oldValue, newValue in
-            let value = (Double(newValue) ?? 0) * /*(rate.mid ?? 0)*/ 2
+            let value = (Double(newValue) ?? 0) / (rate.mid ?? 0)
             receiveValue = String(format: "%.3f", value)
         }
         .onChange(of: receiveValue) { oldValue, newValue in
-            let value = (Double(newValue) ?? 0) / /*(rate.mid ?? 0)*/ 2
+            let value = (Double(newValue) ?? 0) * (rate.mid ?? 0)
             amount = String(format: "%.3f", value)
         }
-    }
-    
-    private func calculcateAmount(amount: String) {
-        
-        
     }
     
     private var exchangeButton: some View {
@@ -182,7 +200,7 @@ struct ExchangeSheetView: View {
             }
             .buttonStyle(.bordered)
         }
-        .disabled(!amount.isEmpty && !receiveValue.isEmpty)
+        .disabled(amount.isEmpty && receiveValue.isEmpty)
         .padding()
     }
 

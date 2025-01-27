@@ -56,10 +56,14 @@ struct WalletView: View {
             List {
                 ForEach(transactions, id: \.date) { transaction in
                     transactionRow(transaction: transaction)
+                        .listRowSeparator(.hidden)
                 }
             }
             .listStyle(.plain)
             .scrollIndicators(.hidden)
+            .toolbar {
+                sortToolbar
+            }
         } else {
             ContentUnavailableView("No recent transactions", systemImage: "clock")
         }
@@ -68,15 +72,12 @@ struct WalletView: View {
     @ViewBuilder
     fileprivate func transactionRow(transaction: Transaction) -> some View {
         if transaction.type == .buy || transaction.type == .sell {
-            HStack {
-                Image(systemName: "polishzlotysign.arrow.circlepath")
-                    .modifier(IconModifier())
+            HStack(alignment: .center) {
+                Image(systemName: "arrow.left.arrow.right")
+                    .iconStyle(font: .title2, fontWeight: .regular)
                 VStack(alignment: .leading) {
                     HStack {
-                        Text("\(transaction.currencyFrom ?? "N/A")")
-                            .bold()
-                        Image(systemName: "arrow.left.arrow.right")
-                        Text("\(transaction.currencyTo ?? "N/A")")
+                        Text("\(transaction.currencyFrom ?? "N/A")" + " to " + "\(transaction.currencyTo ?? "N/A")")
                             .bold()
                     }
                     // TODO: Format date
@@ -85,20 +86,19 @@ struct WalletView: View {
                 }
                 Spacer()
                 VStack(alignment: .center) {
-                    Text("Received")
                     HStack {
                         Text(String(format: "%.2f", transaction.amount) + " \(transaction.currencyTo ?? "N/A")")
+                            .bold()
                     }
                 }
             }
         } else if transaction.type == .topUp {
-            HStack {
+            HStack(alignment: .center) {
                 Image(systemName: "arrow.down.to.line.alt")
-                    .iconStyle()
+                    .iconStyle(font: .title2, fontWeight: .regular)
                 VStack(alignment: .leading) {
                     HStack {
-                        Text("Deposit in")
-                        Text("\(transaction.currencyTo ?? "N/A")")
+                        Text("Deposit in " + "\(transaction.currencyTo ?? "N/A")")
                             .bold()
                     }
                     Text("\(transaction.date.displayFormat)")
@@ -106,13 +106,38 @@ struct WalletView: View {
                 }
                 Spacer()
                 VStack(alignment: .center) {
-                    Text("Received")
                     HStack {
-                        Text(String(format: "%.2f", transaction.amount) + " \(transaction.currencyTo ?? "N/A")")
+                        Text(String(format: "+%.2f", transaction.amount) + " \(transaction.currencyTo ?? "N/A")")
+                            .bold()
                     }
                     .foregroundStyle(Color(.systemGreen))
                 }
             }
+        }
+    }
+    
+    fileprivate var sortToolbar: some View {
+        Menu {
+            Button {
+                
+            } label : {
+                Text("Show All")
+                Image(systemName: "tray.full")
+            }
+            Button {
+                
+            } label : {
+                Text("Show Exchanges")
+                Image(systemName: "arrow.left.arrow.right")
+            }
+            Button {
+                
+            } label : {
+                Text("Show Deposits")
+                Image(systemName: "arrow.down.to.line.alt")
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease.circle")
         }
     }
     

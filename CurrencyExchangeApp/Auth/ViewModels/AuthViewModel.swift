@@ -208,6 +208,39 @@ class AuthViewModel: ObservableObject {
         return watchlist
     }
     
+    func deleteWatchlist(_ watchlist: Watchlist) async throws {
+        guard let index = currentUser?.watchlists.firstIndex(where: { $0.name == watchlist.name }) else {
+            print("Watchlist '\(watchlist.name)' not found.")
+            return
+        }
+           
+        currentUser?.watchlists.remove(at: index)
+           
+        let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
+        try await updateFirestoreUser(
+            field: "watchlists",
+            value: watchlistsData
+        )
+           
+        print("Watchlist '\(watchlist.name)' deleted successfully.")
+    }
+    
+    func editWatchlist(watchlist: Watchlist, newName: String) async throws -> Watchlist? {
+        guard let index = currentUser?.watchlists.firstIndex(where: { $0.name == watchlist.name }) else {
+            print("Watchlist '\(watchlist.name)' not found.")
+            return nil
+        }
+        
+        currentUser?.watchlists[index].name = newName
+        
+        let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
+        try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
+        
+        print("Watchlist renamed to '\(newName)' successfully.")
+        
+        return currentUser?.watchlists[index]
+    }
+    
     func addToWatchlist(watchlist: Watchlist, rate: Rate) async throws {
         if let index = currentUser?.watchlists.firstIndex(where: { $0.name == watchlist.name }) {
             currentUser?.watchlists[index].rates.append(rate)

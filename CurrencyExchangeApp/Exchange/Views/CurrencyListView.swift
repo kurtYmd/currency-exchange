@@ -15,7 +15,11 @@ struct CurrencyListView: View {
     @State private var selectedRate: Rate? = nil
     @State private var isAlertShown: Bool = false
     @State private var watchlistText: String = ""
+    @State private var newWatchlistName: String = ""
     @State private var isManageWatchlistShown: Bool = false
+    @State private var isDeleteWatchlist: Bool = false
+    @State private var isEditWatchlistShown: Bool = false
+    @State private var watchlistToEdit: Watchlist? = nil
     
     // Bind to userViewModel's watchlists
     @State private var selectedWatchlistID: String?
@@ -63,6 +67,10 @@ struct CurrencyListView: View {
                 .sheet(item: $selectedRate) { rate in
                     ItemSheetView(rate: rate)
                         .presentationDetents([.height(550)])
+                }
+                .sheet(isPresented: $isManageWatchlistShown) {
+                    manageWatchlistSheet
+                        .presentationDetents([.medium, .large])
                 }
                 .alert("New Watchlist", isPresented: $isAlertShown, actions: {
                     createWatchlistAlert
@@ -217,10 +225,7 @@ struct CurrencyListView: View {
                 }
             }
         } label: {
-            // Current Watchlist
-            
                 HStack {
-                    // Watchlist name
                     Text(selectedWatchlist?.name ?? "N/A")
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.caption)
@@ -261,6 +266,21 @@ struct CurrencyListView: View {
     }
     
     @ViewBuilder
+    fileprivate var editWatchlitAlert: some View {
+        TextField("Edit Watchlist Name", text: $newWatchlistName)
+        Button("Cancel") {
+            dismiss()
+        }
+        Button("Save") {
+            Task {
+//                let newWatchlist = try await userViewModel.editWatchlist(watchlist: , newName: newWatchlistName)
+            }
+            dismiss()
+        }
+        .disabled(newWatchlistName.isEmpty)
+    }
+    
+    @ViewBuilder
     fileprivate var createWatchlistAlert: some View {
         TextField("New Watchlist", text: $watchlistText)
         Button("Cancel") {
@@ -268,12 +288,76 @@ struct CurrencyListView: View {
         }
         Button("Save") {
             Task {
-               let newWatchlist = try await userViewModel.createWatchlist(name: watchlistText)
+                let newWatchlist = try await userViewModel.createWatchlist(name: watchlistText)
                 selectedWatchlistID = newWatchlist.id
                 dismiss()
             }
         }
         .disabled(watchlistText.isEmpty)
+    }
+    
+    
+    fileprivate var manageWatchlistSheet: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("My Watchlist")
+                        .fontWeight(.semibold)
+                    ForEach(userViewModel.currentUser?.watchlists.filter { $0.name != "My Watchlist" } ?? []) { watchlist in
+                        Text(watchlist.name)
+                            .swipeActions {
+                                Button {
+                                    Task {
+                                        do {
+                                            try await userViewModel.deleteWatchlist(watchlist)
+                                        } catch {
+                                            print("Error deleting watchlist: \(error)")
+                                        }
+                                    }
+                                } label : {
+                                    Image(systemName: "trash")
+                                }
+                                .tint(.red)
+                                Button {
+                                    watchlistToEdit = watchlist
+                                    isEditWatchlistShown.toggle()
+                                } label : {
+                                    Image(systemName: "pencil")
+                                }
+                            }
+                    }
+                }
+                Section {
+                    Button {
+                        isAlertShown.toggle()
+                    } label : {
+                        HStack {
+                            Image(systemName: "plus")
+                            Text("New Watchlist")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .fontWeight(.semibold)
+                    }
+                }
+            }
+            .navigationTitle("Manage Watchlists")
+            .navigationBarTitleDisplayMode(.inline)
+            .alert("Edit Watchlist Name", isPresented: $isEditWatchlistShown, actions: {
+                editWatchlitAlert
+            }, message : {
+                Text("Enter a new name for this watchlist.")
+            })
+            .confirmationDialog("", isPresented: $isDeleteWatchlist) {
+                Button ("Cancel") {
+                    dismiss()
+                }
+                Button ("Delete Watchlist", role: .destructive) {
+                    // Handle deletion
+                }
+            } message: {
+                Text("Are you sure you want to delete this watchlist?")
+            }
+        }
     }
     
     fileprivate var toolbarMenu: some View {
