@@ -20,9 +20,6 @@ struct MainView: View {
                     Tab("Exchange", systemImage: "polishzlotysign.arrow.trianglehead.counterclockwise.rotate.90") {
                         CurrencyListView()
                     }
-                    Tab("Profile", systemImage: "person.circle.fill") {
-                        ProfileView()
-                    }
                 }
                 .tint(Color(.systemIndigo))
             } else {

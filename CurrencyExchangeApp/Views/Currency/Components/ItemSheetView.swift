@@ -210,27 +210,18 @@ struct ItemSheetView: View {
             Button {
                 presentExchangeSheet(for: .buy)
             } label: {
-                Text("Buy")
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color(.systemGreen))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-            
-            Button {
-                presentExchangeSheet(for: .sell)
-            } label: {
-                Text("Sell")
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color(.systemRed))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                VStack {
+                    Image(systemName: "arrow.left.arrow.right.circle.fill")
+                        .symbolEffect(.wiggle.byLayer, options: .repeat(.periodic(delay: 1.0)))
+                    Text("Exchange")
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(Color.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .background(Color(.indigo))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
             }
         }
-        .padding(.top, 10)
     }
 }

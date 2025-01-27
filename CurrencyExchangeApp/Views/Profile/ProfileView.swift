@@ -18,44 +18,47 @@ struct ProfileView: View {
     
     var body: some View {
         if let user = viewModel.currentUser {
-            List {
-                Section {
-                    HStack {
-                        Text(user.intials)
-                            .font(.title)
-                            .foregroundStyle(Color(.white))
-                            .fontWeight(.semibold)
-                            .frame(width: 72, height: 72)
-                            .background(Color(.systemGray3))
-                            .clipShape(Circle())
-                            .padding(5)
-                        
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(user.fullname)
-                                .padding(.top, 4)
-                            Text(user.email)
-                                .font(.caption)
-                                .foregroundStyle(Color.secondary)
+            NavigationStack {
+                List {
+                    Section {
+                        HStack {
+                            Text(user.intials)
+                                .font(.title)
+                                .foregroundStyle(Color(.white))
+                                .fontWeight(.semibold)
+                                .frame(width: 72, height: 72)
+                                .background(Color(.systemGray3))
+                                .clipShape(Circle())
+                                .padding(5)
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(user.fullname)
+                                    .padding(.top, 4)
+                                Text(user.email)
+                                    .font(.caption)
+                                    .foregroundStyle(Color.secondary)
+                            }
                         }
                     }
-                }
-                Section {
-                    Button {
-                        signOutIsPressed = true
-                        isPresented = true
-                    } label : {
-                        Text("Sign Out")
+                    Section {
+                        Button {
+                            signOutIsPressed = true
+                            isPresented = true
+                        } label : {
+                            Text("Sign Out")
+                        }
+                        .foregroundStyle(Color(.systemRed))
+                        
+                        Button {
+                            deleteAccountIsPresented = true
+                            isPresented = true
+                        } label: {
+                            Text("Delete Account")
+                        }
+                        .foregroundStyle(Color(.systemRed))
                     }
-                    .foregroundStyle(Color(.systemRed))
-                    
-                    Button {
-                        deleteAccountIsPresented = true
-                        isPresented = true
-                    } label: {
-                        Text("Delete Account")
-                    }
-                    .foregroundStyle(Color(.systemRed))
                 }
+                .navigationTitle("Account")
+                .navigationBarTitleDisplayMode(.inline)
             }
             .alert("Delete Account", isPresented: $showErrorAlert, actions: {
                 Button("Sign Out", role: .destructive) {

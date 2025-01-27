@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Charts
 
 struct CurrencyListView: View {
     @StateObject private var currencyViewModel = CurrencyViewModel()
@@ -14,6 +15,7 @@ struct CurrencyListView: View {
     @State private var selectedRate: Rate? = nil
     @State private var isAlertShown: Bool = false
     @State private var watchlistText: String = ""
+    @State private var isManageWatchlistShown: Bool = false
     
     // Bind to userViewModel's watchlists
     @State private var selectedWatchlistID: String?
@@ -60,6 +62,7 @@ struct CurrencyListView: View {
                 }
                 .sheet(item: $selectedRate) { rate in
                     ItemSheetView(rate: rate)
+                        .presentationDetents([.height(550)])
                 }
                 .alert("New Watchlist", isPresented: $isAlertShown, actions: {
                     createWatchlistAlert
@@ -102,7 +105,7 @@ struct CurrencyListView: View {
                         if currentWatchlist.rates.contains(where: { $0.id == rate.id }) {
                             Image(systemName: "checkmark.circle.fill")
                                 .onTapGesture {
-                                    // Remove from watchlist
+                                    // Remove
                                 }
                         } else {
                             Image(systemName: "plus.circle")
@@ -152,6 +155,7 @@ struct CurrencyListView: View {
                             .font(.caption)
                     }
                     Spacer()
+                    miniChart
                     VStack {
                         if let currentRate = currencyViewModel.rates.first(where: { $0.code == rate.code }) {
                             Text(String(format: "%.4f", currentRate.mid ?? "N/A") + "zł")
@@ -196,7 +200,7 @@ struct CurrencyListView: View {
             }
             Divider()
             Button {
-                
+                isManageWatchlistShown.toggle()
             } label: {
                 HStack {
                     Text("Manage Watchlists")
@@ -223,6 +227,36 @@ struct CurrencyListView: View {
                 .bold()
             
         }
+    }
+    
+    @ViewBuilder
+    fileprivate var miniChart: some View {
+        Chart {
+            ForEach(currencyViewModel.rateHistory) {
+                LineMark(
+                    x: .value("Date", $0.effectiveDate),
+                    y: .value("Rate", $0.mid)
+                )
+                .interpolationMethod(.cardinal)
+                .foregroundStyle(currencyViewModel.getLineColor())
+                AreaMark(
+                    x: .value("Date", $0.effectiveDate),
+                    yStart: .value("Min", currencyViewModel.rateHistory.map { $0.mid }.min() ?? 0.0),
+                    yEnd: .value("Max", $0.mid)
+                )
+                .interpolationMethod(.cardinal)
+                .foregroundStyle(
+                    LinearGradient(
+                        gradient: Gradient(colors: [currencyViewModel.getLineColor().opacity(0.4), .clear]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            }
+        }
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .frame(width: 50,height: 20)
     }
     
     @ViewBuilder

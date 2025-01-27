@@ -13,6 +13,7 @@ struct WalletView: View {
     @State private var amount: String = ""
     @Environment(\.dismiss) private var dismiss
     @State private var showAllTransactions = false
+    @State private var showProfile = false
     
     var body: some View {
         if viewModel.currentUser != nil {
@@ -36,6 +37,9 @@ struct WalletView: View {
                     }
                 }
                 .navigationTitle("Wallet")
+                .sheet(isPresented: $showProfile) {
+                    ProfileView()
+                }
                 .sheet(isPresented: $showSheet) {
                     TopUpSheetView(amount: $amount)
                 }
@@ -115,6 +119,12 @@ struct WalletView: View {
     //TODO: Hide all recent transaction
     fileprivate var toolbar: some View {
         Menu {
+            Button {
+                showProfile.toggle()
+            } label : {
+                Text("Account")
+                Image(systemName: "person.circle")
+            }
             Button {
                 showSheet.toggle()
             } label : {
