@@ -65,6 +65,9 @@ struct ExchangeSheetView: View {
                         Spacer()
                         HStack {
                             Text("Max:")
+                                .onTapGesture {
+                                    amount = String(format: "%.0f", viewModel.currentUser?.balance["PLN"] ?? 0.0)
+                                }
                             Text(String(format: "%.0f \("PLN")", viewModel.currentUser?.balance["PLN"] ?? 0.0))
                                 .foregroundStyle(Color.secondary)
                         }
@@ -89,6 +92,9 @@ struct ExchangeSheetView: View {
                         Spacer()
                         HStack {
                             Text("Max:")
+                                .onTapGesture {
+                                    receiveValue = String(format: "%.0f", viewModel.currentUser?.balance[rate.code] ?? 0.0)
+                                }
                             Text(String(format: "%.0f \(rate.code)", viewModel.currentUser?.balance[rate.code] ?? 0.0))
                                 .foregroundStyle(Color.secondary)
                         }
@@ -163,15 +169,21 @@ struct ExchangeSheetView: View {
     }
     
     private var exchangeButton: some View {
-        Button {
-            isPresented = true
-        } label: {
-            Text("Exchange")
+        HStack(spacing: 15) {
+            Button {
+                isPresented = true
+            } label: {
+                VStack {
+                    Text("Review Order")
+                        .fontWeight(.semibold)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
         }
-        .frame(width: UIScreen.main.bounds.width - 32, height: 48)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .disabled(amount.isEmpty)
-        .padding(.bottom)
+        .disabled(!amount.isEmpty && !receiveValue.isEmpty)
+        .padding()
     }
 
     private var toggleExchangeType: some View {

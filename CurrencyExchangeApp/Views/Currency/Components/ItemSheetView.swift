@@ -133,10 +133,7 @@ struct ItemSheetView: View {
             .chartXSelection(value: $selectedDate)
 //            .chartXScale(domain: (currencyViewModel.rateHistory.first?.effectiveDate ?? Date())...(Date()))
             .chartYScale(domain: (minMid)...(maxMid))
-//            .chartXAxis {
-//                
-//            }
-            
+            .chartXAxis(.hidden)
         } else {
             ProgressView()
                 .frame(height: 250)
@@ -147,7 +144,8 @@ struct ItemSheetView: View {
     private var indicator: some ChartContent {
         if let selectedExchangeRate {
             RuleMark(x: .value("Selected Date", selectedExchangeRate.effectiveDate))
-                .foregroundStyle(lineColor.opacity(0.7))
+                .lineStyle(StrokeStyle(lineWidth: 0.5))
+                .foregroundStyle(Color.gray.opacity(0.7))
             PointMark(
                 x: .value("Selected Date", selectedExchangeRate.effectiveDate),
                 y: .value("Selected Rate", selectedExchangeRate.mid)
@@ -213,15 +211,13 @@ struct ItemSheetView: View {
                 VStack {
                     Image(systemName: "arrow.left.arrow.right.circle.fill")
                         .symbolEffect(.wiggle.byLayer, options: .repeat(.periodic(delay: 1.0)))
+                        .font(.title2)
                     Text("Exchange")
-                        .fontWeight(.semibold)
+                        .font(.caption)
                 }
-                .foregroundStyle(Color.white)
                 .frame(maxWidth: .infinity)
-                .frame(height: 48)
-                .background(Color(.indigo))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
             }
+            .buttonStyle(.bordered)
         }
     }
 }
