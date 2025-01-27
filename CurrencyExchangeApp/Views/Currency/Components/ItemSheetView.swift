@@ -131,7 +131,6 @@ struct ItemSheetView: View {
             }
             .frame(height: 250)
             .chartXSelection(value: $selectedDate)
-//            .chartXScale(domain: (currencyViewModel.rateHistory.first?.effectiveDate ?? Date())...(Date()))
             .chartYScale(domain: (minMid)...(maxMid))
             .chartXAxis(.hidden)
         } else {
