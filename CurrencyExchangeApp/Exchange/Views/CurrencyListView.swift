@@ -93,7 +93,8 @@ struct CurrencyListView: View {
         if currencyViewModel.filterCurrency.isEmpty {
             watchlistMenu
                 .listRowSeparator(.hidden)
-            ContentUnavailableView("No results for " + "\"\(currencyViewModel.searchText)\"", systemImage: "xmark")
+            ContentUnavailableView("Not Found", systemImage: "exclamationmark.magnifyingglass", description: Text("No results for " + "\"\(currencyViewModel.searchText)\""))
+            
                 .padding(.top, 100)
                 .listRowSeparator(.hidden)
         } else {
