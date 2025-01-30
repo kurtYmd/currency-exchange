@@ -21,6 +21,14 @@ struct ExchangeSheetView: View {
         case first, second
     }
     
+    let formatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 2
+        return formatter
+    }()
+    
     private var maxPLN: Double {
         viewModel.currentUser?.balance["PLN"] ?? 0.0
     }
@@ -83,7 +91,7 @@ struct ExchangeSheetView: View {
                         HStack {
                             Text("Max:")
                                 .onTapGesture {
-                                    amount = String(format: "%.0f", maxPLN)
+                                    amount = formatter.string(from: NSNumber(value: maxPLN)) ?? ""
                                 }
                             Text(String(format: "%.0f \("PLN")", maxPLN))
                                 .foregroundStyle(Color.secondary)
@@ -119,7 +127,7 @@ struct ExchangeSheetView: View {
                         HStack {
                             Text("Max:")
                                 .onTapGesture {
-                                    receiveValue = String(format: "%.0f", maxExchange)
+                                    receiveValue = formatter.string(from: NSNumber(value: maxExchange)) ?? ""
                                 }
                             Text(String(format: "%.0f \(rate.code)", maxExchange))
                                 .foregroundStyle(Color.secondary)
@@ -207,7 +215,6 @@ struct ExchangeSheetView: View {
                     let value = (Double(newValue) ?? 0) * (rate.mid ?? 0)
                     amount = String(format: "%.3f", value)
                 }
-                
             }
         }
     }
@@ -226,7 +233,7 @@ struct ExchangeSheetView: View {
             }
             .buttonStyle(.bordered)
         }
-        .disabled(amount.isEmpty && receiveValue.isEmpty || Double(amount) ?? 0 > maxPLN || Double(receiveValue) ?? 0 > maxExchange)
+        .disabled(!exchangeIsValid)
         .padding()
     }
 
@@ -244,5 +251,19 @@ struct ExchangeSheetView: View {
             .padding(.trailing, 10)
         }
         .padding(.vertical, 10)
+    }
+}
+
+extension ExchangeSheetView: ExchangeProtocol {
+    var exchangeIsValid: Bool {
+        guard let amountValue = Double(amount), let receiveValue = Double(receiveValue) else {
+            return false
+        }
+        
+        return amountValue > 0 &&
+        receiveValue > 0 &&
+        
+        focusedField == .first && amountValue <= maxPLN ||
+        focusedField == .second && receiveValue <= maxExchange && amountValue != 0
     }
 }

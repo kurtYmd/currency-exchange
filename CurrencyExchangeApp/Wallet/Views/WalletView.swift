@@ -12,8 +12,15 @@ struct WalletView: View {
     @State private var showSheet = false
     @State private var amount: String = ""
     @Environment(\.dismiss) private var dismiss
-    @State private var showAllTransactions = false
+    @State private var showAllAssets = false
     @State private var showProfile = false
+    @State private var selectedFilter: TransactionFilter = .all
+    
+    enum TransactionFilter {
+        case all
+        case exchanges
+        case deposits
+    }
     
     var body: some View {
         if viewModel.currentUser != nil {
@@ -52,22 +59,38 @@ struct WalletView: View {
     
     @ViewBuilder
     fileprivate var transactionHistory: some View {
-        if let transactions = viewModel.currentUser?.transactionHistory, !transactions.isEmpty {
-            List {
-                ForEach(transactions, id: \.date) { transaction in
-                    transactionRow(transaction: transaction)
-                        .listRowSeparator(.hidden)
+        if let transactions = viewModel.currentUser?.transactionHistory {
+            let filteredTransactions = transactions.filter { transaction in
+                switch selectedFilter {
+                case .all:
+                    return true
+                case .exchanges:
+                    return transaction.type == .buy || transaction.type == .sell
+                case .deposits:
+                    return transaction.type == .topUp
                 }
             }
-            .listStyle(.plain)
-            .scrollIndicators(.hidden)
-            .toolbar {
-                sortToolbar
+            
+            if !filteredTransactions.isEmpty {
+                List {
+                    ForEach(filteredTransactions, id: \.date) { transaction in
+                        transactionRow(transaction: transaction)
+                            .listRowSeparator(.hidden)
+                    }
+                }
+                .listStyle(.plain)
+                .scrollIndicators(.hidden)
+                .toolbar {
+                    sortToolbar
+                }
+            } else {
+                ContentUnavailableView("No transactions found", systemImage: "clock")
             }
         } else {
             ContentUnavailableView("No recent transactions", systemImage: "clock")
         }
     }
+
     
     @ViewBuilder
     fileprivate func transactionRow(transaction: Transaction) -> some View {
@@ -119,22 +142,19 @@ struct WalletView: View {
     fileprivate var sortToolbar: some View {
         Menu {
             Button {
-                
-            } label : {
-                Text("Show All")
-                Image(systemName: "tray.full")
+                selectedFilter = .all
+            } label: {
+                Label("Show All", systemImage: "tray.full")
             }
             Button {
-                
-            } label : {
-                Text("Show Exchanges")
-                Image(systemName: "arrow.left.arrow.right")
+                selectedFilter = .exchanges
+            } label: {
+                Label("Show Exchanges", systemImage: "arrow.left.arrow.right")
             }
             Button {
-                
-            } label : {
-                Text("Show Deposits")
-                Image(systemName: "arrow.down.to.line.alt")
+                selectedFilter = .deposits
+            } label: {
+                Label("Show Deposits", systemImage: "arrow.down.to.line.alt")
             }
         } label: {
             Image(systemName: "line.3.horizontal.decrease.circle")
@@ -180,6 +200,8 @@ struct WalletView: View {
                 HStack {
                     Text("\(currency)")
                         .iconStyle(font: .caption)
+                    Text("")
+                    Spacer()
                     Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
                         .font(.headline)
                 }
@@ -187,6 +209,17 @@ struct WalletView: View {
                 ContentUnavailableView("Your currency list is empty", systemImage: "dollarsign")
             }
         }
+        Button {
+            showAllAssets.toggle()
+        } label : {
+            HStack {
+                Image(systemName: showAllAssets ? "eye.slash.fill" : "eye.fill")
+                    .iconStyle(font: .title3)
+                Text(showAllAssets ? "Show Less" : "Show All")
+                    .fontWeight(.semibold)
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 

@@ -81,6 +81,7 @@ struct ItemSheetView: View {
                 chart
                     .frame(height: 250)
                 timeframePicker
+                    .padding(.top)
             }
         }
         .onAppear {

@@ -7,7 +7,11 @@
 
 import Foundation
 
-struct Rate: Codable, Identifiable, Equatable {
+struct Rate: Codable, Identifiable, Equatable, Comparable {
+    static func < (lhs: Rate, rhs: Rate) -> Bool {
+        lhs > rhs
+    }
+    
     var id: String {
         code
     }

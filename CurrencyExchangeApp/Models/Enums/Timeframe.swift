@@ -17,7 +17,6 @@ enum Timeframe: CaseIterable, Identifiable {
     case nineMonths
     case yearToDate
     case year
-    case allTime
     
     var id: String { abbreviation }
     
@@ -45,8 +44,6 @@ enum Timeframe: CaseIterable, Identifiable {
             return dateFormatter.string(from: calendar.date(from: calendar.dateComponents([.year], from: Date()))!)
         case .year:
             return dateFormatter.string(from: calendar.date(byAdding: .year, value: -1, to: Date())!)
-        case .allTime:
-            return "2002-02-01"
         }
     }
     
@@ -61,7 +58,6 @@ enum Timeframe: CaseIterable, Identifiable {
         case .nineMonths: return "9M"
         case .yearToDate: return "YTD"
         case .year: return "1Y"
-        case .allTime: return "ALL"
         }
     }
     
@@ -76,7 +72,6 @@ enum Timeframe: CaseIterable, Identifiable {
         case .nineMonths: return "Past 9 Months"
         case .yearToDate: return "Year To Date"
         case .year: return "Past Year"
-        case .allTime: return "All Time"
         }
     }
 }

@@ -13,6 +13,10 @@ protocol AuthenticationFormProtocol {
     var formIsValid: Bool { get }
 }
 
+protocol ExchangeProtocol {
+    var exchangeIsValid: Bool { get }
+}
+
 @MainActor
 class AuthViewModel: ObservableObject {
     @Published var userSession: FirebaseAuth.User?
@@ -44,20 +48,16 @@ class AuthViewModel: ObservableObject {
         
         currentUser?.balance["PLN"] = (currentUser?.balance["PLN"] ?? 0.0) + amount
         
-        // Save the updated balance to Firestore
         try await updateFirestoreUser(field: "balance", value: currentUser?.balance ?? [:])
         
         let transaction = Transaction(currencyFrom: nil, currencyTo: "PLN", amount: amount, type: .topUp, date: Date())
         let transactionData = transaction.toDictionary()
         
-        // Add transaction to Firebase
         try await userDocument(userId: uid).collection("transactionHistory").addDocument(data: transactionData)
         currentUser?.transactionHistory.append(transaction)
         
-        // Convert transactionHistory to an array of dictionaries before saving it to Firestore
         let transactionHistoryData = currentUser?.transactionHistory.map { $0.toDictionary() } ?? []
        
-        // Save the updated transaction history to Firestore
         try await updateFirestoreUser(field: "transactionHistory", value: transactionHistoryData)
     }
     

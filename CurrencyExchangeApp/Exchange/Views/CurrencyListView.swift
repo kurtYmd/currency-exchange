@@ -19,6 +19,7 @@ struct CurrencyListView: View {
     @State private var isManageWatchlistShown: Bool = false
     @State private var isDeleteWatchlist: Bool = false
     @State private var isEditWatchlistShown: Bool = false
+    @State private var isShowPLN: Bool = true
     @State private var watchlistToEdit: Watchlist? = nil
     
     // Bind to userViewModel's watchlists
@@ -167,9 +168,14 @@ struct CurrencyListView: View {
                     miniChart
                     VStack {
                         if let currentRate = currencyViewModel.rates.first(where: { $0.code == rate.code }) {
-                            Text(String(format: "%.4f", currentRate.mid ?? "N/A") + "zł")
-                                .foregroundStyle(Color.primary)
-                                .font(.headline)
+                            HStack(spacing: 0) {
+                                Text(String(format: "%.4f", currentRate.mid ?? "N/A"))
+                                if isShowPLN {
+                                    Text("zł")
+                                }
+                            }
+                            .foregroundStyle(Color.primary)
+                            .font(.headline)
                         } else {
                             Text("N/A")
                                 .foregroundStyle(Color.secondary)
@@ -177,6 +183,7 @@ struct CurrencyListView: View {
                         }
                     }
                 }
+                .contentShape(Rectangle())
                 .onTapGesture {
                     selectedRate = rate
                     print("Selected Rate: \(String(describing: selectedRate))")
@@ -367,34 +374,14 @@ struct CurrencyListView: View {
     fileprivate var toolbarMenu: some View {
         Menu {
             Button {
-                
+                isShowPLN.toggle()
             } label: {
+                if isShowPLN {
+                    Image(systemName: "checkmark")
+                }
                 HStack {
                     Text("Show Currency")
                     Image(systemName: "polishzlotysign")
-                }
-            }
-            Divider()
-            Menu {
-                Button {
-                    
-                } label: {
-                    Text("Manual")
-                }
-                Button {
-                    
-                } label: {
-                    Text("Favorites First")
-                }
-                Button {
-                    
-                } label: {
-                    Text("Name")
-                }
-            } label: {
-                HStack {
-                    Text("Sort Watchlist By")
-                    Image(systemName: "arrow.up.arrow.down")
                 }
             }
         } label: {
