@@ -65,7 +65,7 @@ struct CurrencyListView: View {
                     currencyViewModel.fetchCurrencyRates()
                 }
                 .sheet(item: $selectedRate) { rate in
-                    ItemSheetView(rate: rate)
+                    ItemSheetView(rate: currencyViewModel.rates.first(where: { $0.code == rate.code }) ?? rate)
                         .presentationDetents([.height(550)])
                 }
                 .sheet(isPresented: $isManageWatchlistShown) {
@@ -177,7 +177,6 @@ struct CurrencyListView: View {
                         }
                     }
                 }
-                .contentShape(Rectangle())
                 .onTapGesture {
                     selectedRate = rate
                     print("Selected Rate: \(String(describing: selectedRate))")
@@ -326,6 +325,11 @@ struct CurrencyListView: View {
                                 }
                             }
                     }
+                } header : {
+                    Text("Your Watchlists")
+                }
+                footer : {
+                    Text("Create, rename and delete watchlists.")
                 }
                 Section {
                     Button {

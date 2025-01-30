@@ -68,7 +68,7 @@ struct ItemSheetView: View {
             exchangeButton
             
             VStack(alignment: .leading) {
-                VStack {
+                VStack(alignment: .leading) {
                     annotation
                 }.padding(.bottom, 5)
                 Text("\(rate.currency.capitalized) • \(rate.code)")
@@ -83,9 +83,8 @@ struct ItemSheetView: View {
                 timeframePicker
             }
         }
-        .onAppear() {
+        .onAppear {
             currencyViewModel.fetchCurrencyRatesHistory(code: rate.code, timeframe: selectedTimeframe)
-            print(currencyViewModel.rateHistory)
         }
         .padding()
         .sheet(isPresented: $isPresented) {

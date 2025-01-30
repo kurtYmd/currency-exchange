@@ -15,14 +15,19 @@ struct ExchangeSheetView: View {
     @State var isPresented = false
     @State var amount: String = ""
     @State var receiveValue: String = ""
+    @FocusState private var focusedField: Field?
     
-//    private var maxPLN: Double {
-//        
-//    }
-//    
-//    private var maxExchange: Double {
-//        
-//    }
+    enum Field {
+        case first, second
+    }
+    
+    private var maxPLN: Double {
+        viewModel.currentUser?.balance["PLN"] ?? 0.0
+    }
+    
+    private var maxExchange: Double {
+        viewModel.currentUser?.balance[rate.code] ?? 0.0
+    }
 
     var body: some View {
         if viewModel.currentUser != nil {
@@ -78,20 +83,23 @@ struct ExchangeSheetView: View {
                         HStack {
                             Text("Max:")
                                 .onTapGesture {
-                                    amount = String(format: "%.0f", viewModel.currentUser?.balance["PLN"] ?? 0.0)
+                                    amount = String(format: "%.0f", maxPLN)
                                 }
-                            Text(String(format: "%.0f \("PLN")", viewModel.currentUser?.balance["PLN"] ?? 0.0))
+                            Text(String(format: "%.0f \("PLN")", maxPLN))
                                 .foregroundStyle(Color.secondary)
                         }
                     }
                     HStack(alignment: .firstTextBaseline) {
-                        VStack {
+                        VStack(alignment: .leading) {
                             TextField("0", text: $amount)
+                                .focused($focusedField, equals: .first)
+                                .foregroundStyle((Double(amount) ?? 0.0 > maxPLN ? Color.red : Color.primary))
                                 .keyboardType(.decimalPad)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .font(.system(size: 55))
                                 .bold()
                             Text("Not enough funds.")
+                                .opacity(Double(amount) ?? 0.0 > maxPLN ? 1 : 0)
                                 .font(.caption)
                                 .foregroundStyle(Color.red)
                         }
@@ -111,20 +119,23 @@ struct ExchangeSheetView: View {
                         HStack {
                             Text("Max:")
                                 .onTapGesture {
-                                    receiveValue = String(format: "%.0f", viewModel.currentUser?.balance[rate.code] ?? 0.0)
+                                    receiveValue = String(format: "%.0f", maxExchange)
                                 }
-                            Text(String(format: "%.0f \(rate.code)", viewModel.currentUser?.balance[rate.code] ?? 0.0))
+                            Text(String(format: "%.0f \(rate.code)", maxExchange))
                                 .foregroundStyle(Color.secondary)
                         }
                     }
                     HStack(alignment: .firstTextBaseline) {
-                        VStack {
+                        VStack(alignment: .leading) {
                             TextField("0", text: $receiveValue)
+                                .focused($focusedField, equals: .second)
+                                .foregroundStyle((Double(amount) ?? 0.0 > maxExchange ? Color.red : Color.primary))
                                 .keyboardType(.decimalPad)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .font(.system(size: 55))
                                 .bold()
                             Text("Not enough funds.")
+                                .opacity(Double(receiveValue) ?? 0.0 > maxExchange ? 1 : 0)
                                 .font(.caption)
                                 .foregroundStyle(Color.red)
                         }
@@ -146,6 +157,7 @@ struct ExchangeSheetView: View {
                     }
                     HStack {
                         TextField("0", text: $receiveValue)
+                            .focused($focusedField, equals: .second)
                             .keyboardType(.decimalPad)
                             .textFieldStyle(PlainTextFieldStyle())
                             .font(.system(size: 55))
@@ -163,6 +175,7 @@ struct ExchangeSheetView: View {
                     }
                     HStack {
                         TextField("0", text: $amount)
+                            .focused($focusedField, equals: .first)
                             .keyboardType(.decimalPad)
                             .textFieldStyle(PlainTextFieldStyle())
                             .font(.system(size: 55))
@@ -177,12 +190,25 @@ struct ExchangeSheetView: View {
         }
         .padding(.horizontal)
         .onChange(of: amount) { oldValue, newValue in
-            let value = (Double(newValue) ?? 0) / (rate.mid ?? 0)
-            receiveValue = String(format: "%.3f", value)
+            if focusedField == .first {
+                if newValue.isEmpty {
+                    receiveValue = ""
+                } else {
+                    let value = (Double(newValue) ?? 0) / (rate.mid ?? 0)
+                    receiveValue = String(format: "%.3f", value)
+                }
+            }
         }
         .onChange(of: receiveValue) { oldValue, newValue in
-            let value = (Double(newValue) ?? 0) * (rate.mid ?? 0)
-            amount = String(format: "%.3f", value)
+            if focusedField == .second {
+                if newValue.isEmpty {
+                    amount = ""
+                } else {
+                    let value = (Double(newValue) ?? 0) * (rate.mid ?? 0)
+                    amount = String(format: "%.3f", value)
+                }
+                
+            }
         }
     }
     
@@ -200,7 +226,7 @@ struct ExchangeSheetView: View {
             }
             .buttonStyle(.bordered)
         }
-        .disabled(amount.isEmpty && receiveValue.isEmpty)
+        .disabled(amount.isEmpty && receiveValue.isEmpty || Double(amount) ?? 0 > maxPLN || Double(receiveValue) ?? 0 > maxExchange)
         .padding()
     }
 

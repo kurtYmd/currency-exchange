@@ -203,7 +203,10 @@ class AuthViewModel: ObservableObject {
         currentUser?.watchlists.append(watchlist)
         
         let watchlistsData = currentUser?.watchlists.map { $0.toDictionary() } ?? []
-        try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
+        try await updateFirestoreUser(
+            field: "watchlists",
+            value: watchlistsData
+        )
         
         return watchlist
     }
@@ -249,7 +252,6 @@ class AuthViewModel: ObservableObject {
             
             try await updateFirestoreUser(field: "watchlists", value: watchlistsData)
             
-            // Reassign to trigger @Published
             if var updatedUser = currentUser {
                 updatedUser.watchlists = currentUser?.watchlists ?? []
                 self.currentUser = updatedUser
