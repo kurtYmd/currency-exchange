@@ -89,6 +89,9 @@ struct WalletView: View {
                 }
             } else {
                 ContentUnavailableView("No transactions found", systemImage: "clock")
+                    .toolbar {
+                        sortToolbar
+                    }
             }
         } else {
             ContentUnavailableView("No recent transactions", systemImage: "clock")
@@ -219,9 +222,11 @@ struct WalletView: View {
                         Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
                             .fontWeight(.semibold)
                     }
+                } else {
+                    ContentUnavailableView("Your currency list is empty", systemImage: "tray")
                 }
             } else {
-                ContentUnavailableView("Your currency list is empty", systemImage: "dollarsign")
+                ContentUnavailableView("Your currency list is empty", systemImage: "tray")
             }
         }
     }
