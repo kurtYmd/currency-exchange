@@ -10,7 +10,8 @@ import Firebase
 
 @main
 struct CurrencyExchangeApp: App {
-    @StateObject var viewModel = AuthViewModel()
+    @StateObject var authViewModel = AuthViewModel()
+    @StateObject var currencyViewModel = CurrencyViewModel()
     
     init() {
         FirebaseApp.configure()
@@ -19,7 +20,8 @@ struct CurrencyExchangeApp: App {
     var body: some Scene {
         WindowGroup {
             MainView()
-                .environmentObject(viewModel)
+                .environmentObject(authViewModel)
+                .environmentObject(currencyViewModel)
         }
     }
 }

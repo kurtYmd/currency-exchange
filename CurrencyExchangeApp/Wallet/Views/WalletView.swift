@@ -9,7 +9,7 @@ import SwiftUI
 
 struct WalletView: View {
     @EnvironmentObject private var viewModel: AuthViewModel
-    @StateObject private var currencyViewModel = CurrencyViewModel()
+    @EnvironmentObject var currencyViewModel: CurrencyViewModel
     @State private var showSheet = false
     @State private var amount: String = ""
     @Environment(\.dismiss) private var dismiss

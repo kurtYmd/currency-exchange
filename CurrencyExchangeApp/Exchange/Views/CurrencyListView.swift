@@ -9,7 +9,7 @@ import SwiftUI
 import Charts
 
 struct CurrencyListView: View {
-    @StateObject private var currencyViewModel = CurrencyViewModel()
+    @EnvironmentObject var currencyViewModel: CurrencyViewModel
     @EnvironmentObject private var userViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var selectedRate: Rate? = nil
