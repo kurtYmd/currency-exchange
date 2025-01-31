@@ -203,27 +203,31 @@ struct WalletView: View {
     fileprivate var listOfUserCurrency: some View {
         ForEach(Array((viewModel.currentUser?.balance.keys)!), id: \.self) { currency in
             if viewModel.currentUser?.balance[currency] != 0.0 {
-                if let rate = currencyViewModel.rates.first(where: { $0.code == currency }) {
                     HStack {
                         Text("\(currency)")
                             .iconStyle(font: .caption)
-                        VStack(alignment: .leading) {
-                            Text("\(rate.currency.capitalized)")
-                                .font(.title3)
-                                .fontWeight(.medium)
-                            HStack(spacing: 0) {
-                                Text(String(format: "%.4f", rate.mid ?? "N/A"))
-                                Text("zł")
+                        if let rate = currencyViewModel.rates.first(where: { $0.code == currency }) {
+                            VStack(alignment: .leading) {
+                                Text("\(rate.currency.capitalized)")
+                                    .font(.title3)
+                                    .fontWeight(.medium)
+                                HStack(spacing: 0) {
+                                    Text(String(format: "%.4f", rate.mid ?? "N/A"))
+                                    Text("zł")
+                                }
+                                .font(.footnote)
+                                .foregroundStyle(Color.secondary)
                             }
-                            .font(.footnote)
-                            .foregroundStyle(Color.secondary)
+                        } else {
+                            VStack(alignment: .leading) {
+                                Text("Złoty")
+                                    .font(.title3)
+                                    .fontWeight(.medium)
+                            }
                         }
                         Spacer()
                         Text(String(format: "%.1f", viewModel.currentUser?.balance[currency] ?? 0.0))
                             .fontWeight(.semibold)
-                    }
-                } else {
-                    ContentUnavailableView("Your currency list is empty", systemImage: "tray")
                 }
             } else {
                 ContentUnavailableView("Your currency list is empty", systemImage: "tray")
