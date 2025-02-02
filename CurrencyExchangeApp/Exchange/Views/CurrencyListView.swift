@@ -279,7 +279,13 @@ struct CurrencyListView: View {
         }
         Button("Save") {
             Task {
-//                let newWatchlist = try await userViewModel.editWatchlist(watchlist: , newName: newWatchlistName)
+                do {
+                    if let watchlist = watchlistToEdit {
+                        try await userViewModel.editWatchlist(watchlist: watchlist, newName: newWatchlistName)
+                    }
+                } catch {
+                    print("Error editing watchlist")
+                }
             }
             dismiss()
         }
