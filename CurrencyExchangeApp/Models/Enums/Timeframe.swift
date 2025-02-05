@@ -8,7 +8,6 @@
 import Foundation
 
 enum Timeframe: CaseIterable, Identifiable {
-    case day
     case week
     case twoWeeks
     case month
@@ -26,8 +25,6 @@ enum Timeframe: CaseIterable, Identifiable {
         let calendar = Calendar.current
         
         switch self {
-        case .day:
-            return dateFormatter.string(from: calendar.date(byAdding: .day, value: -2, to: Date())!)
         case .week:
             return dateFormatter.string(from: calendar.date(byAdding: .day, value: -7, to: Date())!)
         case .twoWeeks:
@@ -49,7 +46,6 @@ enum Timeframe: CaseIterable, Identifiable {
     
     var abbreviation: String {
         switch self {
-        case .day: return "1D"
         case .week: return "1W"
         case .twoWeeks: return "2W"
         case .month: return "1M"
@@ -63,7 +59,6 @@ enum Timeframe: CaseIterable, Identifiable {
     
     var description: String {
         switch self {
-        case .day: return "At Close"
         case .week: return "Past Week"
         case .twoWeeks: return "Past 2 Weeks"
         case .month: return "Past Montrh"
